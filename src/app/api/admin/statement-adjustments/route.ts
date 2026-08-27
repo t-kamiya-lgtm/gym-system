@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireOperatorAdmin } from "@/lib/require-operator-role";
+import { reopenStatement } from "@/lib/statements";
 
 const createSchema = z.object({
   corporationId: z.string().uuid(),
@@ -13,7 +14,8 @@ const createSchema = z.object({
 
 /**
  * 明細確定後のキャンセル反映漏れ・計算エラー等を吸収するための手動加算/減算(決定事項)。
- * 支払い明細の同意はロックではなくトリガーのため、同意後でもこの調整を追加できる。
+ * 月次確認(同意)後の修正は運営側管理画面からのみ行う。既に同意済みの月であれば、
+ * 調整の追加と同時にロックを解除してdraft(未承認)に戻し、法人側の再同意を必要とする。
  */
 export async function POST(request: Request) {
   const check = await requireOperatorAdmin();
@@ -38,5 +40,7 @@ export async function POST(request: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  await reopenStatement(admin, corporationId, yearMonth);
   return NextResponse.json({ ok: true }, { status: 201 });
 }

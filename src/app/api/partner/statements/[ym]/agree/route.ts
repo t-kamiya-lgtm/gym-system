@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requirePartner } from "@/lib/require-partner-role";
+import { agreeToStatement } from "@/lib/statements";
 
 /**
- * 支払い明細への同意。同意は支払い実行のトリガーとして記録するが、
- * ロックではないため同意後も点数・金額は都度再計算される(手動調整で補正)。
+ * 支払い明細への同意。同意した時点のライブ計算結果をスナップショットとして固定(ロック)する。
+ * ロック後の修正は運営側管理画面からのみ行い、修正されると再度同意が必要になる。
  */
 export async function POST(request: Request, { params }: { params: Promise<{ ym: string }> }) {
   const check = await requirePartner();
@@ -16,19 +17,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ ym:
   }
 
   const admin = createSupabaseAdminClient();
-  const { error } = await admin.from("gym_monthly_statements").upsert(
-    {
-      corporation_id: check.partner.corporationId,
-      year_month: `${ym}-01`,
-      status: "agreed",
-      agreed_at: new Date().toISOString(),
-      agreed_by: check.partner.id,
-    },
-    { onConflict: "corporation_id,year_month" },
-  );
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    await agreeToStatement(admin, check.partner.corporationId, ym, check.partner.id);
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "failed" }, { status: 500 });
   }
   return NextResponse.json({ ok: true });
 }

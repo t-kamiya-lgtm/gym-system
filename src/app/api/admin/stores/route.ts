@@ -11,10 +11,9 @@ const createSchema = z.object({
 
 /**
  * 店舗の新規登録・追加登録は常に弊社管理者のみが行う(決定事項)。
- * 登録と同時に、既存coupons(type='manual_code')へ店舗専用コードを発行し、
- * gym_store_couponsで1:1に紐付ける。
- * このクーポンは値引きではなく受注の店舗識別が目的のため、discount_valueは
- * 制約上必須の最小値(1円)を設定する(価格自体は商品側のlist_price/first_time_priceで構成する)。
+ * クーポンコード自体はpm-chat-bot側(チャットシステムの管理画面)で既に発行されている前提で、
+ * ここではそのコードを検索して店舗に登録する(店舗への告知・実績引用のための紐付けであり、
+ * 本システムから新規にクーポンを発行することはしない)。
  */
 export async function POST(request: Request) {
   const check = await requireOperator();
@@ -29,22 +28,28 @@ export async function POST(request: Request) {
 
   const { data: coupon, error: couponError } = await admin
     .from("coupons")
-    .insert({
-      type: "manual_code",
-      code: couponCode,
-      name: `${name} 店舗コード`,
-      discount_type: "fixed",
-      discount_value: 1,
-      is_active: true,
-    })
     .select("id")
-    .single();
+    .eq("type", "manual_code")
+    .eq("code", couponCode)
+    .maybeSingle();
 
   if (couponError) {
-    const message = couponError.message.includes("coupons_code_key")
-      ? "このクーポンコードは既に使用されています"
-      : couponError.message;
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ error: couponError.message }, { status: 500 });
+  }
+  if (!coupon) {
+    return NextResponse.json(
+      { error: "このクーポンコードはチャットシステム側にまだ登録されていません。先にチャットシステム側でクーポンを発行してください。" },
+      { status: 400 },
+    );
+  }
+
+  const { data: existingLink } = await admin
+    .from("gym_store_coupons")
+    .select("id")
+    .eq("coupon_id", coupon.id)
+    .maybeSingle();
+  if (existingLink) {
+    return NextResponse.json({ error: "このクーポンコードは既に別の店舗に登録されています" }, { status: 400 });
   }
 
   const { data: store, error: storeError } = await admin
@@ -54,7 +59,6 @@ export async function POST(request: Request) {
     .single();
 
   if (storeError) {
-    await admin.from("coupons").delete().eq("id", coupon.id);
     return NextResponse.json({ error: storeError.message }, { status: 500 });
   }
 
@@ -64,7 +68,6 @@ export async function POST(request: Request) {
 
   if (linkError) {
     await admin.from("gym_stores").delete().eq("id", store.id);
-    await admin.from("coupons").delete().eq("id", coupon.id);
     return NextResponse.json({ error: linkError.message }, { status: 500 });
   }
 

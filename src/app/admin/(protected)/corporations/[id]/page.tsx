@@ -5,6 +5,7 @@ import { currentYearMonthJst } from "@/lib/rewards";
 import { CreateStoreForm } from "@/components/admin/CreateStoreForm";
 import { CreatePartnerUserForm } from "@/components/admin/CreatePartnerUserForm";
 import { AddAdjustmentForm } from "@/components/admin/AddAdjustmentForm";
+import { ReopenStatementButton } from "@/components/admin/ReopenStatementButton";
 
 export default async function CorporationDetailPage({
   params,
@@ -127,8 +128,24 @@ export default async function CorporationDetailPage({
             <dt className="font-medium text-neutral-700">最終報酬額</dt>
             <dd className="font-medium">¥{statement.finalAmount.toLocaleString()}</dd>
             <dt className="text-neutral-500">同意状況</dt>
-            <dd>{statement.status === "agreed" ? `同意済(${statement.agreedAt})` : "未同意"}</dd>
+            <dd>
+              {statement.status === "agreed" ? (
+                <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700">
+                  同意済・ロック中({statement.agreedAt})
+                </span>
+              ) : (
+                <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">未同意(ライブ計算中)</span>
+              )}
+            </dd>
           </dl>
+          {statement.status === "agreed" && (
+            <div className="border-t border-neutral-100 pt-3">
+              <p className="mb-2 text-xs text-neutral-500">
+                同意済みの明細を修正するには、まずロックを解除してください。解除すると法人側は再度同意が必要になります。
+              </p>
+              <ReopenStatementButton corporationId={id} yearMonth={yearMonth} />
+            </div>
+          )}
         </div>
         <AddAdjustmentForm
           corporationId={id}

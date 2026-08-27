@@ -32,13 +32,15 @@ export function CreateStoreForm({ corporationId }: { corporationId: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="card space-y-3">
-      <h2 className="font-medium">店舗を追加(クーポンコードを同時発行)</h2>
+      <h2 className="font-medium">店舗を追加</h2>
       <div>
         <label className="mb-1 block text-sm text-neutral-600">店舗名</label>
         <input className="input" value={name} onChange={(e) => setName(e.target.value)} required />
       </div>
       <div>
-        <label className="mb-1 block text-sm text-neutral-600">クーポンコード</label>
+        <label className="mb-1 block text-sm text-neutral-600">
+          クーポンコード(チャットシステム側で発行済みのものを入力)
+        </label>
         <input
           className="input"
           value={couponCode}

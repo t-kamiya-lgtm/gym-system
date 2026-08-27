@@ -31,9 +31,9 @@ create table if not exists gym_stores (
 create index if not exists gym_stores_corporation_id_idx on gym_stores (corporation_id);
 
 -- 店舗とクーポン(既存coupons、type='manual_code')の1:1紐付け。
--- 紐付け対象のクーポンは、値引きではなく店舗の受注識別のみを目的とする
--- (既存coupons.discount_valueは0より大きい制約のため、discount_type='fixed'/discount_value=1円の
--- 実質無視できる値を運用上設定する。価格自体は商品側のlist_price/price/first_time_priceで構成する)。
+-- クーポン自体はpm-chat-bot側(チャットシステムの管理画面)で発行する。本システムでは
+-- 発行済みのクーポンコードを「登録」するだけで、店舗への告知・実績の紐付け(集計キー)として使う
+-- (このシステムからcoupons行を新規作成することはしない)。
 create table if not exists gym_store_coupons (
   id uuid primary key default gen_random_uuid(),
   store_id uuid not null references gym_stores (id) on delete cascade,

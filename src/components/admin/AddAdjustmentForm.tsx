@@ -50,6 +50,7 @@ export function AddAdjustmentForm({
       <h2 className="font-medium">手動調整を追加({yearMonth})</h2>
       <p className="text-xs text-neutral-500">
         明細確定後のキャンセル反映漏れ・計算エラー等を、金額の加算(プラス)/減算(マイナス)で補正します。
+        既に法人側が同意済みの場合、追加すると自動的にロックが解除され、法人側は再同意が必要になります。
       </p>
       <div>
         <label className="mb-1 block text-sm text-neutral-600">対象(店舗を選ばなければ法人全体への調整)</label>

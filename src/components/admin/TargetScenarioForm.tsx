@@ -13,12 +13,14 @@ export function TargetScenarioForm({
   const router = useRouter();
   const [scenarioId, setScenarioId] = useState(currentScenarioId ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    setSuccess(false);
     const res = await fetch("/api/admin/settings", {
       method: "PATCH",
       headers: { "content-type": "application/json" },
@@ -29,6 +31,7 @@ export function TargetScenarioForm({
       setError("更新に失敗しました");
       return;
     }
+    setSuccess(true);
     router.refresh();
   }
 
@@ -38,7 +41,15 @@ export function TargetScenarioForm({
       <p className="text-xs text-neutral-500">
         アフィリエイト集計の対象は1シナリオのみ。このシナリオ経由以外の注文は集計対象外です。
       </p>
-      <select className="input" value={scenarioId} onChange={(e) => setScenarioId(e.target.value)} required>
+      <select
+        className="input"
+        value={scenarioId}
+        onChange={(e) => {
+          setScenarioId(e.target.value);
+          setSuccess(false);
+        }}
+        required
+      >
         <option value="" disabled>
           選択してください
         </option>
@@ -49,6 +60,7 @@ export function TargetScenarioForm({
         ))}
       </select>
       {error && <p className="text-sm text-red-600">{error}</p>}
+      {success && <p className="text-sm text-green-700">保存しました。</p>}
       <button type="submit" disabled={submitting} className="btn-primary text-sm">
         保存
       </button>

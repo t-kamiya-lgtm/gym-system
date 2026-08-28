@@ -23,7 +23,7 @@ export default async function PartnerLayout({ children }: { children: React.Reac
       <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
         <div className="mx-auto flex max-w-screen-2xl items-center justify-between px-6 py-4">
           <Link href="/partner" className="font-semibold hover:text-neutral-700">
-            {corporation?.name ?? "法人"}様 パートナー管理画面
+            プロテインモンスター オフィシャルパートナー {corporation?.name ?? "法人"}様 パートナー管理画面
           </Link>
           <div className="flex items-center gap-2">
             <span className="text-sm text-neutral-500">{partner.email}</span>

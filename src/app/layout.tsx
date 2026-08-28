@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ジムアフィリエイト管理システム",
+  title: "プロテインモンスター オフィシャルパートナー｜ジムアフィリエイト管理システム",
   description: "ジム向けアフィリエイトプログラム管理システム",
 };
 

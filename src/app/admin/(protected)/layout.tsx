@@ -16,7 +16,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
         <div className="mx-auto flex max-w-screen-2xl items-center justify-between px-6 py-4">
           <Link href="/admin" className="font-semibold hover:text-neutral-700">
-            ジムアフィリエイト管理システム(運営側)
+            プロテインモンスター オフィシャルパートナー ジムアフィリエイト管理システム(運営側)
           </Link>
           <div className="flex items-center gap-2">
             <span className="text-sm text-neutral-500">{operator.email}</span>

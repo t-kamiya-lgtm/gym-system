@@ -52,9 +52,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "このクーポンコードは既に別の店舗に登録されています" }, { status: 400 });
   }
 
+  const { data: existingStores } = await admin
+    .from("gym_stores")
+    .select("store_no")
+    .eq("corporation_id", corporationId)
+    .order("store_no", { ascending: false })
+    .limit(1);
+  const nextStoreNo = (existingStores?.[0]?.store_no ?? 0) + 1;
+
   const { data: store, error: storeError } = await admin
     .from("gym_stores")
-    .insert({ corporation_id: corporationId, name })
+    .insert({ corporation_id: corporationId, name, store_no: nextStoreNo })
     .select("id")
     .single();
 

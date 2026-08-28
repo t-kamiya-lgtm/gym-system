@@ -1,35 +1,29 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
-import { getCorporationStatement } from "@/lib/statements";
+import { getStorePointsForCorporation } from "@/lib/points";
 import { currentYearMonthJst } from "@/lib/rewards";
+import { managementCode } from "@/lib/types";
 import { CreateStoreForm } from "@/components/admin/CreateStoreForm";
 import { CreatePartnerUserForm } from "@/components/admin/CreatePartnerUserForm";
-import { AddAdjustmentForm } from "@/components/admin/AddAdjustmentForm";
-import { ReopenStatementButton } from "@/components/admin/ReopenStatementButton";
 
-export default async function CorporationDetailPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ ym?: string }>;
-}) {
+export default async function CorporationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { ym } = await searchParams;
-  const yearMonth = ym ?? currentYearMonthJst();
+  const yearMonth = currentYearMonthJst();
   const admin = createSupabaseAdminClient();
 
   const { data: corporation } = await admin
     .from("gym_corporations")
-    .select("id, name, invoice_registered, invoice_registration_number")
+    .select("id, corp_no, name, invoice_registered, invoice_registration_number")
     .eq("id", id)
     .maybeSingle();
   if (!corporation) notFound();
 
   const { data: stores } = await admin
     .from("gym_stores")
-    .select("id, name")
-    .eq("corporation_id", id);
+    .select("id, name, store_no")
+    .eq("corporation_id", id)
+    .order("store_no");
 
   const storeIds = (stores ?? []).map((s) => s.id);
   const { data: storeCoupons } = storeIds.length
@@ -47,23 +41,33 @@ export default async function CorporationDetailPage({
     .select("id, email, is_active")
     .eq("corporation_id", id);
 
-  const statement = await getCorporationStatement(admin, id, yearMonth);
+  const { stores: storePoints } = await getStorePointsForCorporation(admin, id, yearMonth);
+  const pointsByStoreId = new Map(storePoints.map((s) => [s.storeId, s.points]));
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-lg font-semibold">{corporation.name}</h1>
-        <p className="text-sm text-neutral-500">
-          インボイス: {corporation.invoice_registered ? `対象(${corporation.invoice_registration_number})` : "非対象"}
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-lg font-semibold">
+            <span className="mr-2 font-mono text-neutral-400">{managementCode(corporation.corp_no)}</span>
+            {corporation.name}
+          </h1>
+          <p className="text-sm text-neutral-500">
+            インボイス: {corporation.invoice_registered ? `対象(${corporation.invoice_registration_number})` : "非対象"}
+          </p>
+        </div>
+        <Link href={`/admin/corporations/${id}/statement`} className="btn-primary text-sm">
+          月次明細を見る
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="card overflow-x-auto">
           <h2 className="mb-3 font-medium">店舗一覧・クーポンコード</h2>
-          <table className="w-full min-w-[400px] text-sm">
+          <table className="w-full min-w-[440px] text-sm">
             <thead>
               <tr className="border-b border-neutral-200 text-left text-neutral-500">
+                <th className="py-2">店舗No</th>
                 <th className="py-2">店舗名</th>
                 <th className="py-2">クーポンコード</th>
                 <th className="py-2">当月点数</th>
@@ -71,20 +75,20 @@ export default async function CorporationDetailPage({
             </thead>
             <tbody>
               {(stores ?? []).map((s) => {
-                const storeStatement = statement.stores.find((st) => st.storeId === s.id);
                 const couponId = couponIdByStoreId.get(s.id);
                 const code = couponId ? codeByCouponId.get(couponId) : null;
                 return (
                   <tr key={s.id} className="border-b border-neutral-100">
+                    <td className="py-2 font-mono">{managementCode(corporation.corp_no, s.store_no)}</td>
                     <td className="py-2">{s.name}</td>
                     <td className="py-2 font-mono">{code ?? "-"}</td>
-                    <td className="py-2">{storeStatement?.points ?? 0} 点</td>
+                    <td className="py-2">{pointsByStoreId.get(s.id) ?? 0} 点</td>
                   </tr>
                 );
               })}
               {(stores ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={3} className="py-6 text-center text-neutral-400">
+                  <td colSpan={4} className="py-6 text-center text-neutral-400">
                     店舗が登録されていません
                   </td>
                 </tr>
@@ -111,47 +115,6 @@ export default async function CorporationDetailPage({
           </ul>
         </div>
         <CreatePartnerUserForm corporationId={id} />
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="card space-y-2">
-          <h2 className="font-medium">月次明細({yearMonth})</h2>
-          <dl className="grid grid-cols-2 gap-2 text-sm">
-            <dt className="text-neutral-500">合計点数</dt>
-            <dd>{statement.totalPoints.toLocaleString()} 点</dd>
-            <dt className="text-neutral-500">単価</dt>
-            <dd>¥{statement.unitPrice.toLocaleString()}</dd>
-            <dt className="text-neutral-500">基本報酬額</dt>
-            <dd>¥{statement.baseAmount.toLocaleString()}</dd>
-            <dt className="text-neutral-500">手動調整合計</dt>
-            <dd>¥{statement.adjustmentTotal.toLocaleString()}</dd>
-            <dt className="font-medium text-neutral-700">最終報酬額</dt>
-            <dd className="font-medium">¥{statement.finalAmount.toLocaleString()}</dd>
-            <dt className="text-neutral-500">同意状況</dt>
-            <dd>
-              {statement.status === "agreed" ? (
-                <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700">
-                  同意済・ロック中({statement.agreedAt})
-                </span>
-              ) : (
-                <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">未同意(ライブ計算中)</span>
-              )}
-            </dd>
-          </dl>
-          {statement.status === "agreed" && (
-            <div className="border-t border-neutral-100 pt-3">
-              <p className="mb-2 text-xs text-neutral-500">
-                同意済みの明細を修正するには、まずロックを解除してください。解除すると法人側は再度同意が必要になります。
-              </p>
-              <ReopenStatementButton corporationId={id} yearMonth={yearMonth} />
-            </div>
-          )}
-        </div>
-        <AddAdjustmentForm
-          corporationId={id}
-          yearMonth={yearMonth}
-          stores={(stores ?? []).map((s) => ({ id: s.id, name: s.name }))}
-        />
       </div>
     </div>
   );

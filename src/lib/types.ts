@@ -17,6 +17,7 @@ export interface PartnerUser {
 
 export interface Corporation {
   id: string;
+  corpNo: number;
   name: string;
   invoiceRegistered: boolean;
   invoiceRegistrationNumber: string | null;
@@ -26,8 +27,16 @@ export interface Corporation {
 export interface Store {
   id: string;
   corporationId: string;
+  storeNo: number;
   name: string;
   createdAt: string;
+}
+
+/** 表示用の管理番号(例: 001-001)。 */
+export function managementCode(corpNo: number, storeNo?: number | null): string {
+  const corpPart = String(corpNo).padStart(3, "0");
+  if (storeNo === undefined || storeNo === null) return corpPart;
+  return `${corpPart}-${String(storeNo).padStart(3, "0")}`;
 }
 
 export interface RewardTier {

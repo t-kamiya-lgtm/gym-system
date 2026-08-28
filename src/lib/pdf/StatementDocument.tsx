@@ -1,5 +1,6 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { CorporationStatement } from "@/lib/statements";
+import { OWN_COMPANY } from "@/lib/company-info";
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 10, fontFamily: "Helvetica" },
@@ -45,6 +46,15 @@ export function StatementDocument({
         {invoiceRegistered && invoiceRegistrationNumber && (
           <Text style={styles.subtitle}>登録番号: {invoiceRegistrationNumber}</Text>
         )}
+
+        <View style={{ marginBottom: 16 }}>
+          <Text style={styles.subtitle}>発行元: {OWN_COMPANY.name}</Text>
+          <Text style={styles.subtitle}>登録番号: {OWN_COMPANY.invoiceRegistrationNumber}</Text>
+          <Text style={styles.subtitle}>
+            〒{OWN_COMPANY.postalCode} {OWN_COMPANY.address}
+          </Text>
+          <Text style={styles.subtitle}>{OWN_COMPANY.email}</Text>
+        </View>
 
         <View style={styles.headerRow}>
           <Text style={styles.cellName}>店舗名</Text>

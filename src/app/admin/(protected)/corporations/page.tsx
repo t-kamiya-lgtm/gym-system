@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
+import { managementCode } from "@/lib/types";
 import { CreateCorporationForm } from "@/components/admin/CreateCorporationForm";
 
 export default async function CorporationsPage() {
   const admin = createSupabaseAdminClient();
   const { data: corporations } = await admin
     .from("gym_corporations")
-    .select("id, name, invoice_registered, created_at")
+    .select("id, corp_no, name, invoice_registered, created_at")
     .order("created_at", { ascending: false });
 
   const { data: stores } = await admin.from("gym_stores").select("id, corporation_id");
@@ -24,6 +25,7 @@ export default async function CorporationsPage() {
             <table className="w-full min-w-[520px] text-sm">
               <thead>
                 <tr className="border-b border-neutral-200 text-left text-neutral-500">
+                  <th className="py-2">法人No</th>
                   <th className="py-2">法人名</th>
                   <th className="py-2">店舗数</th>
                   <th className="py-2">インボイス</th>
@@ -33,6 +35,7 @@ export default async function CorporationsPage() {
               <tbody>
                 {(corporations ?? []).map((c) => (
                   <tr key={c.id} className="border-b border-neutral-100">
+                    <td className="py-2 font-mono">{managementCode(c.corp_no)}</td>
                     <td className="py-2">{c.name}</td>
                     <td className="py-2">{storeCountByCorp.get(c.id) ?? 0}</td>
                     <td className="py-2">{c.invoice_registered ? "対象" : "非対象"}</td>
@@ -45,7 +48,7 @@ export default async function CorporationsPage() {
                 ))}
                 {(corporations ?? []).length === 0 && (
                   <tr>
-                    <td colSpan={4} className="py-6 text-center text-neutral-400">
+                    <td colSpan={5} className="py-6 text-center text-neutral-400">
                       登録された法人がありません
                     </td>
                   </tr>

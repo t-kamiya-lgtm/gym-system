@@ -37,7 +37,7 @@ export default async function PartnerStatementsPage({
             <dd className="text-lg font-semibold">{statement.totalPoints.toLocaleString()} 点</dd>
           </div>
           <div>
-            <dt className="text-neutral-500">適用単価</dt>
+            <dt className="text-neutral-500">報酬単価</dt>
             <dd className="text-lg font-semibold">¥{statement.unitPrice.toLocaleString()}</dd>
           </div>
           <div>
@@ -70,6 +70,12 @@ export default async function PartnerStatementsPage({
             className="rounded-md border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
           >
             PDFをダウンロード
+          </a>
+          <a
+            href={`/api/partner/statements/${yearMonth}/csv`}
+            className="rounded-md border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
+          >
+            購入明細CSVをダウンロード
           </a>
         </div>
       </div>

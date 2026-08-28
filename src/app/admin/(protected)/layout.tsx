@@ -14,12 +14,15 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen bg-sky-50">
       <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
-        <div className="mx-auto flex max-w-screen-2xl items-center justify-between px-6 py-4">
-          <Link href="/admin" className="font-semibold hover:text-neutral-700">
-            プロテインモンスター オフィシャルパートナー ジムアフィリエイト管理システム(運営側)
+        <div className="mx-auto flex max-w-screen-2xl items-center justify-between gap-2 px-3 py-2 sm:px-6 sm:py-4">
+          <Link href="/admin" className="min-w-0 truncate text-sm font-semibold hover:text-neutral-700 sm:text-base">
+            <span className="sm:hidden">運営側管理画面</span>
+            <span className="hidden sm:inline">
+              プロテインモンスター オフィシャルパートナー ジムアフィリエイト管理システム(運営側)
+            </span>
           </Link>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-neutral-500">{operator.email}</span>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="hidden text-sm text-neutral-500 sm:inline">{operator.email}</span>
             <LogoutButton redirectTo="/admin/login" />
           </div>
         </div>

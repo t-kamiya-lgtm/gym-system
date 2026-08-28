@@ -121,12 +121,16 @@ export async function getCorporationStatement(
     .maybeSingle();
 
   if (statementRow?.status === "agreed") {
-    const { data: storeRows } = await admin
-      .from("gym_monthly_statement_stores")
-      .select("store_id, points, reward_amount, adjustment_total, final_amount")
-      .eq("statement_id", statementRow.id);
-    const { data: stores } = await admin.from("gym_stores").select("id, name").eq("corporation_id", corporationId);
+    const [{ data: storeRows }, { data: stores }, { data: corporation }] = await Promise.all([
+      admin
+        .from("gym_monthly_statement_stores")
+        .select("store_id, points, reward_amount, adjustment_total, final_amount")
+        .eq("statement_id", statementRow.id),
+      admin.from("gym_stores").select("id, name").eq("corporation_id", corporationId),
+      admin.from("gym_corporations").select("name").eq("id", corporationId).maybeSingle(),
+    ]);
     const nameById = new Map((stores ?? []).map((s) => [s.id, s.name]));
+    const corporationName = corporation?.name ?? "";
 
     return {
       corporationId,
@@ -144,7 +148,15 @@ export async function getCorporationStatement(
       stores: (storeRows ?? []).map((r) => ({
         storeId: r.store_id,
         storeName: nameById.get(r.store_id) ?? "(削除済み店舗)",
+        corporationId,
+        corporationName,
         points: r.points,
+        orderCount: 0,
+        revenue: 0,
+        oneTimeRevenue: 0,
+        oneTimePoints: 0,
+        subscriptionRevenue: 0,
+        subscriptionPoints: 0,
         orders: [],
         rewardAmount: r.reward_amount,
         adjustments: [],

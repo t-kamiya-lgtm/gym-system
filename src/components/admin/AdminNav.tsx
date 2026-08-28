@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const links = [
   { href: "/admin", label: "ダッシュボード" },
   { href: "/admin/corporations", label: "法人・店舗管理" },
+  { href: "/admin/orders", label: "注文一覧" },
   { href: "/admin/settings", label: "設定" },
 ];
 
@@ -13,7 +14,7 @@ export function AdminNav() {
   const pathname = usePathname();
   return (
     <nav className="border-t border-neutral-100 bg-white">
-      <div className="mx-auto flex max-w-screen-2xl gap-1 px-4 sm:px-6">
+      <div className="mx-auto flex max-w-screen-2xl gap-1 overflow-x-auto px-4 sm:px-6">
         {links.map((link) => {
           const active = pathname === link.href || (link.href !== "/admin" && pathname.startsWith(link.href));
           return (

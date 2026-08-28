@@ -27,3 +27,20 @@ export function monthRangeJst(yearMonth: string): { startIso: string; endIso: st
 export function currentYearMonthJst(): string {
   return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Tokyo" }).slice(0, 7);
 }
+
+export interface DailyPointRow {
+  date: string;
+  points: number;
+}
+
+/** 出荷日(JST)ごとの点数内訳。月次明細の合計欄の元になる日別件数。 */
+export function dailyPointBreakdown(orders: { shippedAt: string; quantity: number }[]): DailyPointRow[] {
+  const byDate = new Map<string, number>();
+  for (const o of orders) {
+    const date = new Date(o.shippedAt).toLocaleDateString("sv-SE", { timeZone: "Asia/Tokyo" });
+    byDate.set(date, (byDate.get(date) ?? 0) + o.quantity);
+  }
+  return Array.from(byDate.entries())
+    .map(([date, points]) => ({ date, points }))
+    .sort((a, b) => (a.date < b.date ? -1 : 1));
+}

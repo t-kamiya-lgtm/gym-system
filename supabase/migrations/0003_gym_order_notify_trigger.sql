@@ -3,13 +3,15 @@
 -- ordersへのINSERT時、coupon_idが本システムの店舗クーポンに一致する場合のみ、
 -- 本プロジェクトのAPI(/api/webhooks/order-created)へpg_net経由でHTTP通知する(fire-and-forget)。
 --
--- 事前準備(Supabase側で手動実行が必要):
---   1) pg_net拡張が有効なこと(Supabaseでは通常デフォルトで利用可能)
---   2) 下記2つのデータベース設定値をSupabase側で設定する
---      alter database postgres set app.settings.gym_order_webhook_url = 'https://<本システムのドメイン>/api/webhooks/order-created';
---      alter database postgres set app.settings.gym_order_webhook_secret = '<ランダムな秘密文字列>';
---      (本システム側の環境変数 GYM_ORDER_WEBHOOK_SECRET に同じ値を設定して照合する)
---   3) 設定変更後は新しい接続から反映されるため、必要に応じてSupabaseプロジェクトを再起動する
+-- 実行前に、下の v_webhook_url / v_webhook_secret を実際の値に書き換えてから実行すること。
+--   v_webhook_url    : 'https://<本システムのVercelドメイン>/api/webhooks/order-created'
+--   v_webhook_secret : 本システム側の環境変数 GYM_ORDER_WEBHOOK_SECRET と同じ値
+--
+-- 補足: 当初 `alter database ... set app.settings.xxx` でDB設定として持たせる案を採用していたが、
+-- Supabaseのホスティング環境ではSQL Editorの実行ロールに ALTER DATABASE の権限がなく
+-- (permission denied to set parameter)、この方式は使えなかった。そのため関数本体に直接埋め込む
+-- 方式に変更している。値を変更する場合(ドメイン変更・シークレットのローテーション等)は、
+-- この関数を create or replace function で実行し直すこと。
 
 create extension if not exists pg_net;
 
@@ -21,10 +23,10 @@ set search_path = public
 as $$
 declare
   v_store_id uuid;
-  v_webhook_url text := current_setting('app.settings.gym_order_webhook_url', true);
-  v_webhook_secret text := current_setting('app.settings.gym_order_webhook_secret', true);
+  v_webhook_url text := 'https://<本システムのVercelドメイン>/api/webhooks/order-created';
+  v_webhook_secret text := '<GYM_ORDER_WEBHOOK_SECRETと同じ値>';
 begin
-  if v_webhook_url is null or new.coupon_id is null then
+  if new.coupon_id is null then
     return new;
   end if;
 
@@ -37,7 +39,7 @@ begin
     url := v_webhook_url,
     headers := jsonb_build_object(
       'content-type', 'application/json',
-      'x-webhook-secret', coalesce(v_webhook_secret, '')
+      'x-webhook-secret', v_webhook_secret
     ),
     body := jsonb_build_object('order_id', new.id, 'store_id', v_store_id, 'coupon_id', new.coupon_id)
   );

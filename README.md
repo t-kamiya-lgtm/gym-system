@@ -19,6 +19,24 @@
 
 3. Supabase Authで運営側(Google Workspace)・法人側(メール+パスワード)の両方のプロバイダを有効化する。
 
+## pm-chat-bot側スキーマへの依存関係(重要・要共有)
+
+本システムは同一Supabaseプロジェクト内で、pm-chat-bot側が所有する以下のテーブル・カラムを
+直接参照する。pm-chat-bot側は現在も開発・改修が進行中とのことなので、**これらのリネーム・削除を
+行う際は本システムへの影響を確認してから行う**必要がある(逆に本システム側からこれらを変更することはない)。
+
+| テーブル | 参照しているカラム |
+|---|---|
+| `orders` | `customer_id, product_id, coupon_id, scenario_id, type, quantity, billing_cycle_number, shipped_at, status, import_status` |
+| `coupons` | `id, type, code`(`gym_store_coupons.coupon_id`が`on delete restrict`で外部キー参照している。**店舗に紐付け済みのクーポンはpm-chat-bot側の管理画面から削除できなくなる**点に注意) |
+| `customers` | `id, name` |
+| `products` | `id, name` |
+| `scenarios` | `id, name`(`gym_settings.target_scenario_id`が外部キー参照) |
+| `users` | `auth_user_id, email, role`(運営側ログインの権限判定に使用) |
+
+また、両システムとも「CIによる自動適用なし・Supabase側で手動SQL実行」という同じ運用のため、
+マイグレーション実行のタイミングが重ならないよう、実行前に軽く声をかけ合うことを推奨する。
+
 ## 権限モデル
 
 - **運営側(社内)**: pm-chat-bot側の既存`users`テーブル(admin/staffロール、Google Workspace認証)を

@@ -281,3 +281,51 @@ export async function getActiveSubscriberCountsByStore(
   }
   return counts;
 }
+
+export interface MemberRow {
+  storeId: string;
+  storeName: string;
+  customerId: string;
+  customerName: string;
+  oneTimePoints: number;
+  subscriptionPoints: number;
+  totalPoints: number;
+  lastPurchaseDate: string;
+}
+
+/**
+ * 会員別実績。同じ会員が複数店舗に出現する場合は店舗ごとに別行として集計する
+ * (店舗担当インストラクター名等のメモが店舗単位のため)。累計購入点数の多い順。
+ */
+export function aggregateMembers(stores: StorePoints[]): MemberRow[] {
+  const byKey = new Map<string, MemberRow>();
+  for (const store of stores) {
+    for (const order of store.orders) {
+      const key = `${store.storeId}:${order.customerId}`;
+      let entry = byKey.get(key);
+      if (!entry) {
+        entry = {
+          storeId: store.storeId,
+          storeName: store.storeName,
+          customerId: order.customerId,
+          customerName: order.customerName,
+          oneTimePoints: 0,
+          subscriptionPoints: 0,
+          totalPoints: 0,
+          lastPurchaseDate: order.shippedAt,
+        };
+        byKey.set(key, entry);
+      }
+      if (order.type === "subscription") {
+        entry.subscriptionPoints += order.quantity;
+      } else {
+        entry.oneTimePoints += order.quantity;
+      }
+      entry.totalPoints += order.quantity;
+      if (order.shippedAt > entry.lastPurchaseDate) {
+        entry.lastPurchaseDate = order.shippedAt;
+      }
+    }
+  }
+  return Array.from(byKey.values()).sort((a, b) => b.totalPoints - a.totalPoints);
+}

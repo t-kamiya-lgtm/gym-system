@@ -24,22 +24,27 @@ export default async function PartnerLayout({ children }: { children: React.Reac
   return (
     <div className="min-h-screen bg-sky-50">
       <header className="sticky top-0 z-30 border-b border-neutral-200 bg-white">
-        <div className="mx-auto flex flex-wrap items-center justify-between gap-2 px-3 py-2 sm:px-6 sm:py-4">
-          <Link href="/partner" className="min-w-0 truncate text-sm font-semibold hover:text-neutral-700 sm:text-base">
-            <span className="sm:hidden">パートナー管理画面</span>
-            <span className="hidden sm:inline">
-              プロテインモンスター オフィシャルパートナー {corporation?.name ?? "法人"}様 パートナー管理画面
-            </span>
+        <div className="mx-auto flex items-center justify-between gap-2 px-3 py-2 sm:px-6 sm:py-3">
+          <Link href="/partner" className="shrink-0 text-sm font-semibold leading-tight hover:text-neutral-700">
+            プロテインモンスター
+            <br />
+            オフィシャルパートナー
+            <br />
+            管理画面
           </Link>
-          <div className="flex shrink-0 items-center gap-2">
-            {memberships.length > 1 && (
-              <CorpSwitcher
-                corporations={(corporations ?? []).map((c) => ({ id: c.id, name: c.name }))}
-                activeCorporationId={partner.corporationId}
-              />
-            )}
-            <span className="hidden text-sm text-neutral-500 sm:inline">{partner.email}</span>
-            <LogoutButton redirectTo="/partner/login" />
+          <div className="flex items-center gap-3">
+            <div className="text-right text-xs">
+              {memberships.length > 1 ? (
+                <CorpSwitcher
+                  corporations={(corporations ?? []).map((c) => ({ id: c.id, name: c.name }))}
+                  activeCorporationId={partner.corporationId}
+                />
+              ) : (
+                <div className="font-medium text-neutral-700">{corporation?.name}</div>
+              )}
+              <div className="mt-0.5 text-neutral-500">{partner.email}</div>
+            </div>
+            <LogoutButton redirectTo="/partner/login" variant="icon" />
           </div>
         </div>
         <PartnerNav />

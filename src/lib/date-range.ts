@@ -104,3 +104,10 @@ export function defaultRange(): { from: string; to: string } {
 export function dateJstFromIso(iso: string): string {
   return new Date(iso).toLocaleDateString("sv-SE", { timeZone: "Asia/Tokyo" });
 }
+
+/** 'YYYY-MM'の翌月末日を'YYYY-MM-DD'で返す(振込予定日の起点計算用)。 */
+export function lastDayOfNextMonthJst(yearMonth: string): string {
+  const [y, m] = yearMonth.split("-").map(Number);
+  const { y: ny, m: nm } = addMonths(y, m, 1);
+  return `${pad(ny, 4)}-${pad(nm)}-${pad(daysInMonth(ny, nm))}`;
+}

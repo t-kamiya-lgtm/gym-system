@@ -13,7 +13,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ ym: 
 
   const { data: corporation } = await admin
     .from("gym_corporations")
-    .select("name, invoice_registered, invoice_registration_number")
+    .select("name, address, invoice_registered, invoice_registration_number")
     .eq("id", check.partner.corporationId)
     .maybeSingle();
 
@@ -23,6 +23,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ ym: 
     StatementDocument({
       statement,
       corporationName: corporation?.name ?? "",
+      corporationAddress: corporation?.address ?? null,
       invoiceRegistered: corporation?.invoice_registered ?? false,
       invoiceRegistrationNumber: corporation?.invoice_registration_number ?? null,
     }),

@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import type { CorporationStatement } from "@/lib/statements";
 import { OWN_COMPANY } from "@/lib/company-info";
+import { transferDueDateJst } from "@/lib/rewards";
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 10, fontFamily: "Helvetica" },
@@ -24,28 +25,34 @@ const styles = StyleSheet.create({
 export function StatementDocument({
   statement,
   corporationName,
+  corporationAddress,
   invoiceRegistered,
   invoiceRegistrationNumber,
 }: {
   statement: CorporationStatement;
   corporationName: string;
+  corporationAddress: string | null;
   invoiceRegistered: boolean;
   invoiceRegistrationNumber: string | null;
 }) {
   const taxExcluded = statement.finalAmount;
   const tax = Math.floor(taxExcluded * 0.1);
   const taxIncluded = taxExcluded + tax;
+  const transferDueDate = transferDueDateJst(statement.yearMonth);
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <Text style={styles.title}>支払い明細書</Text>
-        <Text style={styles.subtitle}>
-          {corporationName} 様 / 対象月: {statement.yearMonth}
-        </Text>
-        {invoiceRegistered && invoiceRegistrationNumber && (
-          <Text style={styles.subtitle}>登録番号: {invoiceRegistrationNumber}</Text>
-        )}
+        <Text style={styles.subtitle}>対象月: {statement.yearMonth}</Text>
+
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontSize: 12, marginBottom: 4 }}>{corporationName} 様</Text>
+          {corporationAddress && <Text style={styles.subtitle}>{corporationAddress}</Text>}
+          {invoiceRegistered && invoiceRegistrationNumber && (
+            <Text style={styles.subtitle}>登録番号: {invoiceRegistrationNumber}</Text>
+          )}
+        </View>
 
         <View style={{ marginBottom: 16 }}>
           <Text style={styles.subtitle}>発行元: {OWN_COMPANY.name}</Text>
@@ -81,21 +88,29 @@ export function StatementDocument({
             <Text>¥{statement.unitPrice.toLocaleString()}</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text>{invoiceRegistered ? "税抜金額" : "お支払金額(税込目安)"}</Text>
+            <Text>{invoiceRegistered ? "小計(税抜)" : "お支払金額(税込目安)"}</Text>
             <Text>¥{taxExcluded.toLocaleString()}</Text>
           </View>
           {invoiceRegistered && (
             <>
               <View style={styles.summaryRow}>
-                <Text>消費税(10%)</Text>
+                <Text>税率10%対象</Text>
+                <Text>¥{taxExcluded.toLocaleString()}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text>消費税額(10%)</Text>
                 <Text>¥{tax.toLocaleString()}</Text>
               </View>
               <View style={styles.summaryRow}>
-                <Text>税込合計</Text>
+                <Text>総計</Text>
                 <Text>¥{taxIncluded.toLocaleString()}</Text>
               </View>
             </>
           )}
+          <View style={[styles.summaryRow, { marginTop: 8 }]}>
+            <Text>振込予定日</Text>
+            <Text>{transferDueDate}</Text>
+          </View>
         </View>
 
         <Text style={styles.note}>
@@ -103,6 +118,7 @@ export function StatementDocument({
             ? "本書は適格請求書等保存方式(インボイス制度)に基づく記載事項を含みます。"
             : "貴社はインボイス発行事業者として登録されていないため、本書は適格請求書に該当しません。仕入税額控除の取り扱いは弊社の税務処理に依ります。"}
         </Text>
+        <Text style={styles.note}>振込予定日は対象月の翌月末日(土日祝日の場合は直前の平日)です。</Text>
       </Page>
     </Document>
   );

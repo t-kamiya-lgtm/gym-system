@@ -16,7 +16,7 @@ export async function GET(
 
   const { data: corporation } = await admin
     .from("gym_corporations")
-    .select("name, invoice_registered, invoice_registration_number")
+    .select("name, address, invoice_registered, invoice_registration_number")
     .eq("id", corporationId)
     .maybeSingle();
 
@@ -26,6 +26,7 @@ export async function GET(
     StatementDocument({
       statement,
       corporationName: corporation?.name ?? "",
+      corporationAddress: corporation?.address ?? null,
       invoiceRegistered: corporation?.invoice_registered ?? false,
       invoiceRegistrationNumber: corporation?.invoice_registration_number ?? null,
     }),

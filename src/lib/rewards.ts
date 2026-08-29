@@ -1,4 +1,6 @@
 import type { RewardTier } from "@/lib/types";
+import { lastDayOfNextMonthJst } from "@/lib/date-range";
+import { previousBusinessDay } from "@/lib/jp-holidays";
 
 /**
  * 月間合計点数(店舗単位、法人はその配下店舗の合計)に応じて一律の単価を適用する。
@@ -26,6 +28,11 @@ export function monthRangeJst(yearMonth: string): { startIso: string; endIso: st
 
 export function currentYearMonthJst(): string {
   return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Tokyo" }).slice(0, 7);
+}
+
+/** 振込予定日(対象月の翌月末日。土日祝日の場合はそれより前の直近平日)。 */
+export function transferDueDateJst(yearMonth: string): string {
+  return previousBusinessDay(lastDayOfNextMonthJst(yearMonth));
 }
 
 /** 前月の'YYYY-MM'(JST基準)。支払い明細メニューのデフォルト対象月に使う。 */

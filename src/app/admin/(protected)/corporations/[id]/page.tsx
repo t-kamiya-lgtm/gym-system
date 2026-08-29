@@ -6,6 +6,7 @@ import { currentYearMonthJst } from "@/lib/rewards";
 import { managementCode } from "@/lib/types";
 import { CreateStoreForm } from "@/components/admin/CreateStoreForm";
 import { CreatePartnerUserForm } from "@/components/admin/CreatePartnerUserForm";
+import { EditCorporationForm } from "@/components/admin/EditCorporationForm";
 
 export default async function CorporationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -14,7 +15,9 @@ export default async function CorporationDetailPage({ params }: { params: Promis
 
   const { data: corporation } = await admin
     .from("gym_corporations")
-    .select("id, corp_no, name, invoice_registered, invoice_registration_number")
+    .select(
+      "id, corp_no, name, invoice_registered, invoice_registration_number, address, tel, hp_url, contact_name, contact_tel, contact_email",
+    )
     .eq("id", id)
     .maybeSingle();
   if (!corporation) notFound();
@@ -53,12 +56,44 @@ export default async function CorporationDetailPage({ params }: { params: Promis
             {corporation.name}
           </h1>
           <p className="text-sm text-neutral-500">
-            インボイス: {corporation.invoice_registered ? `対象(${corporation.invoice_registration_number})` : "非対象"}
+            店舗数: {(stores ?? []).length}店舗 ・ インボイス:{" "}
+            {corporation.invoice_registered ? `対象(${corporation.invoice_registration_number})` : "非対象"}
           </p>
+          {(corporation.address || corporation.tel || corporation.hp_url) && (
+            <p className="mt-1 text-xs text-neutral-400">
+              {corporation.address}
+              {corporation.tel && <> ・ TEL: {corporation.tel}</>}
+              {corporation.hp_url && <> ・ {corporation.hp_url}</>}
+            </p>
+          )}
+          {(corporation.contact_name || corporation.contact_tel || corporation.contact_email) && (
+            <p className="mt-1 text-xs text-neutral-400">
+              担当者: {corporation.contact_name}
+              {corporation.contact_tel && <> ・ TEL: {corporation.contact_tel}</>}
+              {corporation.contact_email && <> ・ {corporation.contact_email}</>}
+            </p>
+          )}
         </div>
         <Link href={`/admin/corporations/${id}/statement`} className="btn-primary text-sm">
           月次明細を見る
         </Link>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <EditCorporationForm
+          corporationId={id}
+          initial={{
+            name: corporation.name,
+            invoiceRegistered: corporation.invoice_registered,
+            invoiceRegistrationNumber: corporation.invoice_registration_number,
+            address: corporation.address,
+            tel: corporation.tel,
+            hpUrl: corporation.hp_url,
+            contactName: corporation.contact_name,
+            contactTel: corporation.contact_tel,
+            contactEmail: corporation.contact_email,
+          }}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

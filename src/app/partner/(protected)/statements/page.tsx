@@ -30,6 +30,12 @@ export default async function PartnerStatementsPage({
         </form>
       </div>
 
+      {statement.status === "not_closed" ? (
+        <div className="card text-center text-sm text-neutral-500">
+          {yearMonth}分の支払い明細はまだ確定していません。運営側の月末確定処理が完了次第、こちらに表示されます。
+        </div>
+      ) : (
+      <>
       <div className="card space-y-4">
         <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
           <div>
@@ -103,6 +109,8 @@ export default async function PartnerStatementsPage({
           </tbody>
         </table>
       </div>
+      </>
+      )}
     </div>
   );
 }

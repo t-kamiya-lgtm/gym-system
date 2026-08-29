@@ -28,6 +28,17 @@ export function currentYearMonthJst(): string {
   return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Tokyo" }).slice(0, 7);
 }
 
+/** JSTの'YYYY-MM'から、その月の[開始日, 翌月開始日)を'YYYY-MM-DD'(date型カラム比較用)で返す。 */
+export function monthDateRangeJst(yearMonth: string): { startDate: string; endDate: string } {
+  const [y, m] = yearMonth.split("-").map(Number);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const startDate = `${yearMonth}-01`;
+  const nextY = m === 12 ? y + 1 : y;
+  const nextM = m === 12 ? 1 : m + 1;
+  const endDate = `${nextY}-${pad(nextM)}-01`;
+  return { startDate, endDate };
+}
+
 export interface DailyPointRow {
   date: string;
   points: number;

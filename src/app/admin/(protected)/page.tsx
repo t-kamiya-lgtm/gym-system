@@ -80,22 +80,22 @@ export default async function AdminDashboardPage({
         <DateRangePicker from={from} to={to} />
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-1">
-        <div className="card min-w-[130px] flex-1">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+        <div className="rounded-lg border border-neutral-200 bg-white p-3">
           <div className="text-xs text-neutral-500">法人数</div>
-          <div className="text-xl font-semibold">{corpRows.length}</div>
+          <div className="text-lg font-semibold sm:text-xl">{corpRows.length}</div>
         </div>
-        <div className="card min-w-[130px] flex-1">
+        <div className="rounded-lg border border-neutral-200 bg-white p-3">
           <div className="text-xs text-neutral-500">合計点数</div>
-          <div className="text-xl font-semibold">{grandTotalPoints.toLocaleString()} 点</div>
+          <div className="text-lg font-semibold sm:text-xl">{grandTotalPoints.toLocaleString()} 点</div>
         </div>
-        <div className="card min-w-[130px] flex-1">
+        <div className="rounded-lg border border-neutral-200 bg-white p-3">
           <div className="text-xs text-neutral-500">合計報酬額</div>
-          <div className="text-xl font-semibold">¥{grandTotalReward.toLocaleString()}</div>
+          <div className="text-lg font-semibold sm:text-xl">¥{grandTotalReward.toLocaleString()}</div>
         </div>
-        <div className="card min-w-[130px] flex-1">
+        <div className="rounded-lg border border-neutral-200 bg-white p-3">
           <div className="text-xs text-neutral-500">合計売上</div>
-          <div className="text-xl font-semibold">¥{grandTotalRevenue.toLocaleString()}</div>
+          <div className="text-lg font-semibold sm:text-xl">¥{grandTotalRevenue.toLocaleString()}</div>
         </div>
       </div>
 
@@ -145,7 +145,7 @@ export default async function AdminDashboardPage({
 
       <div className="card overflow-x-auto">
         <h2 className="mb-3 font-medium">店舗別実績</h2>
-        <table className="w-full min-w-[960px] text-sm">
+        <table className="w-full min-w-[1080px] text-sm">
           <thead>
             <tr className="border-b border-neutral-200 text-left text-neutral-500">
               <th className="py-2">店舗No</th>
@@ -159,35 +159,45 @@ export default async function AdminDashboardPage({
               <th className="py-2">定期売上</th>
               <th className="py-2">定期点数</th>
               <th className="py-2">継続定期人数</th>
+              <th className="py-2">報酬単価</th>
+              <th className="py-2">報酬合計</th>
             </tr>
           </thead>
           <tbody>
-            {storeRows.map((s) => (
-              <tr key={s.storeId} className="border-b border-neutral-100">
-                <td className="py-2 font-mono">
-                  {managementCode(corpNoById.get(s.corporationId) ?? 0, storeNoById.get(s.storeId) ?? 0)}
-                </td>
-                <td className="py-2">{s.storeName}</td>
-                <td className="py-2">{s.corporationName}</td>
-                <td className="py-2">{s.points.toLocaleString()} 点</td>
-                <td className="py-2">{s.orderCount.toLocaleString()} 件</td>
-                <td className="py-2">¥{s.revenue.toLocaleString()}</td>
-                <td className="py-2">¥{s.oneTimeRevenue.toLocaleString()}</td>
-                <td className="py-2">{s.oneTimePoints.toLocaleString()} 点</td>
-                <td className="py-2">¥{s.subscriptionRevenue.toLocaleString()}</td>
-                <td className="py-2">{s.subscriptionPoints.toLocaleString()} 点</td>
-                <td className="py-2">{(activeCounts.get(s.storeId) ?? 0).toLocaleString()} 人</td>
-              </tr>
-            ))}
+            {storeRows.map((s) => {
+              const storeUnitPrice = unitPriceForPoints(s.points, tiers);
+              return (
+                <tr key={s.storeId} className={`border-b border-neutral-100 ${tierRowClass(storeUnitPrice)}`}>
+                  <td className="py-2 font-mono">
+                    {managementCode(corpNoById.get(s.corporationId) ?? 0, storeNoById.get(s.storeId) ?? 0)}
+                  </td>
+                  <td className="py-2">{s.storeName}</td>
+                  <td className="py-2">{s.corporationName}</td>
+                  <td className="py-2">{s.points.toLocaleString()} 点</td>
+                  <td className="py-2">{s.orderCount.toLocaleString()} 件</td>
+                  <td className="py-2">¥{s.revenue.toLocaleString()}</td>
+                  <td className="py-2">¥{s.oneTimeRevenue.toLocaleString()}</td>
+                  <td className="py-2">{s.oneTimePoints.toLocaleString()} 点</td>
+                  <td className="py-2">¥{s.subscriptionRevenue.toLocaleString()}</td>
+                  <td className="py-2">{s.subscriptionPoints.toLocaleString()} 点</td>
+                  <td className="py-2">{(activeCounts.get(s.storeId) ?? 0).toLocaleString()} 人</td>
+                  <td className="py-2">¥{storeUnitPrice.toLocaleString()}</td>
+                  <td className="py-2">¥{(s.points * storeUnitPrice).toLocaleString()}</td>
+                </tr>
+              );
+            })}
             {storeRows.length === 0 && (
               <tr>
-                <td colSpan={11} className="py-6 text-center text-neutral-400">
+                <td colSpan={13} className="py-6 text-center text-neutral-400">
                   店舗が登録されていません
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+        <p className="mt-2 text-xs text-neutral-500">
+          報酬単価・行の色分けはこの店舗単独の月間合計点数に基づく参考値です(300円=白 / 450円=薄い黄色 / 600円=薄いピンク)。実際の支払い額は法人配下の店舗合計点数で算出したものが正式な金額です(上の法人別実績、および月次明細)。
+        </p>
       </div>
     </div>
   );

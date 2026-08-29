@@ -37,12 +37,11 @@ export default async function PartnerDashboardPage({
   }));
 
   const totalPoints = stores.reduce((sum, s) => sum + s.points, 0);
-  const totalRevenue = stores.reduce((sum, s) => sum + s.revenue, 0);
   const unitPrice = unitPriceForPoints(totalPoints, tiers);
   const rewardAmount = totalPoints * unitPrice;
   const activeCounts = await getActiveSubscriberCountsByStore(admin, stores.map((s) => s.storeId));
 
-  const storeRows = [...stores].sort((a, b) => b.revenue - a.revenue);
+  const storeRows = [...stores].sort((a, b) => b.points - a.points);
 
   return (
     <div className="space-y-6">
@@ -51,60 +50,64 @@ export default async function PartnerDashboardPage({
         <DateRangePicker from={from} to={to} />
       </div>
 
-      <div className="flex gap-3 overflow-x-auto pb-1">
-        <div className="card min-w-[130px] flex-1">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="rounded-lg border border-neutral-200 bg-white p-3">
           <div className="text-xs text-neutral-500">合計点数</div>
-          <div className="text-xl font-semibold">{totalPoints.toLocaleString()} 点</div>
+          <div className="text-lg font-semibold sm:text-xl">{totalPoints.toLocaleString()} 点</div>
         </div>
-        <div className="card min-w-[130px] flex-1">
+        <div className="rounded-lg border border-neutral-200 bg-white p-3">
           <div className="text-xs text-neutral-500">報酬単価</div>
-          <div className="text-xl font-semibold">¥{unitPrice.toLocaleString()}</div>
+          <div className="text-lg font-semibold sm:text-xl">¥{unitPrice.toLocaleString()}</div>
         </div>
-        <div className="card min-w-[130px] flex-1">
+        <div className="rounded-lg border border-neutral-200 bg-white p-3">
           <div className="text-xs text-neutral-500">報酬額</div>
-          <div className="text-xl font-semibold">¥{rewardAmount.toLocaleString()}</div>
-        </div>
-        <div className="card min-w-[130px] flex-1">
-          <div className="text-xs text-neutral-500">売上</div>
-          <div className="text-xl font-semibold">¥{totalRevenue.toLocaleString()}</div>
+          <div className="text-lg font-semibold sm:text-xl">¥{rewardAmount.toLocaleString()}</div>
         </div>
       </div>
 
       <div className="card overflow-x-auto">
         <h2 className="mb-3 font-medium">店舗別実績</h2>
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-[820px] text-sm">
           <thead>
             <tr className="border-b border-neutral-200 text-left text-neutral-500">
               <th className="py-2">店舗名</th>
-              <th className="py-2">点数</th>
+              <th className="py-2">単品点数</th>
+              <th className="py-2">定期点数</th>
+              <th className="py-2">合計点数</th>
               <th className="py-2">件数</th>
-              <th className="py-2">売上</th>
-              <th className="py-2">単品売上</th>
-              <th className="py-2">定期売上</th>
               <th className="py-2">継続定期人数</th>
+              <th className="py-2">報酬単価</th>
+              <th className="py-2">報酬合計</th>
               <th className="py-2" />
             </tr>
           </thead>
           <tbody>
-            {storeRows.map((s) => (
-              <tr key={s.storeId} className={`border-b border-neutral-100 ${tierRowClass(unitPrice)}`}>
-                <td className="py-2">{s.storeName}</td>
-                <td className="py-2">{s.points.toLocaleString()} 点</td>
-                <td className="py-2">{s.orderCount.toLocaleString()} 件</td>
-                <td className="py-2">¥{s.revenue.toLocaleString()}</td>
-                <td className="py-2">¥{s.oneTimeRevenue.toLocaleString()}</td>
-                <td className="py-2">¥{s.subscriptionRevenue.toLocaleString()}</td>
-                <td className="py-2">{(activeCounts.get(s.storeId) ?? 0).toLocaleString()} 人</td>
-                <td className="py-2">
-                  <Link href={`/partner/stores/${s.storeId}?from=${from}&to=${to}`} className="text-blue-600 hover:underline">
-                    受注詳細
-                  </Link>
-                </td>
-              </tr>
-            ))}
+            {storeRows.map((s) => {
+              const storeUnitPrice = unitPriceForPoints(s.points, tiers);
+              return (
+                <tr key={s.storeId} className={`border-b border-neutral-100 ${tierRowClass(storeUnitPrice)}`}>
+                  <td className="py-2">{s.storeName}</td>
+                  <td className="py-2">{s.oneTimePoints.toLocaleString()} 点</td>
+                  <td className="py-2">{s.subscriptionPoints.toLocaleString()} 点</td>
+                  <td className="py-2">{s.points.toLocaleString()} 点</td>
+                  <td className="py-2">{s.orderCount.toLocaleString()} 件</td>
+                  <td className="py-2">{(activeCounts.get(s.storeId) ?? 0).toLocaleString()} 人</td>
+                  <td className="py-2">¥{storeUnitPrice.toLocaleString()}</td>
+                  <td className="py-2">¥{(s.points * storeUnitPrice).toLocaleString()}</td>
+                  <td className="py-2">
+                    <Link
+                      href={`/partner/stores/${s.storeId}?from=${from}&to=${to}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      受注詳細
+                    </Link>
+                  </td>
+                </tr>
+              );
+            })}
             {storeRows.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-6 text-center text-neutral-400">
+                <td colSpan={9} className="py-6 text-center text-neutral-400">
                   店舗が登録されていません
                 </td>
               </tr>
@@ -112,7 +115,7 @@ export default async function PartnerDashboardPage({
           </tbody>
         </table>
         <p className="mt-2 text-xs text-neutral-500">
-          報酬単価: 300円=白 / 450円=薄い黄色 / 600円=薄いピンク。この画面は選択期間のライブ集計(参考値)です。実際の支払い明細は「支払い明細」メニューで月次(カレンダー月)で確定します。
+          報酬単価・行の色分けはこの店舗単独の月間合計点数に基づく参考値です(300円=白 / 450円=薄い黄色 / 600円=薄いピンク)。実際の支払い額は法人配下の店舗合計点数で算出したものが正式な金額です(上のサマリー、および「支払い明細」メニューで月次に確定します)。
         </p>
       </div>
     </div>

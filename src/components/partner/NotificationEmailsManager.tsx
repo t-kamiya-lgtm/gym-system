@@ -6,20 +6,19 @@ import { useRouter } from "next/navigation";
 export interface NotificationEmailRow {
   id: string;
   email: string;
+  scopeLabel: string;
   storeId: string | null;
-  storeName: string | null;
 }
 
 export function NotificationEmailsManager({
-  scopeLabel,
-  storeId,
   emails,
+  scopeOptions,
 }: {
-  scopeLabel: string;
-  storeId: string | null;
   emails: NotificationEmailRow[];
+  scopeOptions: { value: string; label: string }[];
 }) {
   const router = useRouter();
+  const [scope, setScope] = useState(scopeOptions[0]?.value ?? "");
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -31,7 +30,7 @@ export function NotificationEmailsManager({
     const res = await fetch("/api/partner/notification-emails", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ storeId, email }),
+      body: JSON.stringify({ storeId: scope || null, email }),
     });
     setSubmitting(false);
     if (!res.ok) {
@@ -52,28 +51,68 @@ export function NotificationEmailsManager({
   }
 
   return (
-    <div className="card space-y-3">
-      <h2 className="font-medium">{scopeLabel}の通知先メールアドレス</h2>
-      <ul className="space-y-1 text-sm">
-        {emails.map((e) => (
-          <li key={e.id} className="flex items-center justify-between">
-            <span>{e.email}</span>
-            <button type="button" onClick={() => handleDelete(e.id)} className="text-xs text-red-600 hover:underline">
-              削除
-            </button>
-          </li>
-        ))}
-        {emails.length === 0 && <li className="text-neutral-400">未登録</li>}
-      </ul>
-      <form onSubmit={handleAdd} className="flex gap-2">
-        <input
-          type="email"
-          className="input"
-          placeholder="new-order@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+    <div className="card space-y-4">
+      <div>
+        <h2 className="mb-1 font-medium">新規注文の通知先メールアドレス</h2>
+        <p className="text-xs text-neutral-500">
+          新規注文が入ると、登録したメールアドレスへ「〇〇様の注文が入りました」という通知が送信されます。法人全体・店舗ごとに複数登録できます。
+        </p>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[420px] text-sm">
+          <thead>
+            <tr className="border-b border-neutral-200 text-left text-neutral-500">
+              <th className="py-2">対象</th>
+              <th className="py-2">メールアドレス</th>
+              <th className="py-2" />
+            </tr>
+          </thead>
+          <tbody>
+            {emails.map((e) => (
+              <tr key={e.id} className="border-b border-neutral-100">
+                <td className="py-2">{e.scopeLabel}</td>
+                <td className="py-2">{e.email}</td>
+                <td className="py-2">
+                  <button type="button" onClick={() => handleDelete(e.id)} className="text-xs text-red-600 hover:underline">
+                    削除
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {emails.length === 0 && (
+              <tr>
+                <td colSpan={3} className="py-4 text-center text-neutral-400">
+                  未登録
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <form onSubmit={handleAdd} className="flex flex-wrap items-end gap-2 border-t border-neutral-100 pt-3">
+        <div>
+          <label className="mb-1 block text-xs text-neutral-600">対象</label>
+          <select value={scope} onChange={(e) => setScope(e.target.value)} className="input w-auto">
+            {scopeOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-neutral-600">メールアドレス</label>
+          <input
+            type="email"
+            className="input"
+            placeholder="new-order@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
         <button type="submit" disabled={submitting} className="btn-primary whitespace-nowrap text-sm">
           追加
         </button>

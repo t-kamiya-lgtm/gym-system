@@ -26,9 +26,10 @@ export default async function AdminStatementsPage({
   const yearMonth = ym ?? previousYearMonthJst();
   const admin = createSupabaseAdminClient();
 
-  const [rows, unshippedLines] = await Promise.all([
+  const [rows, unshippedLines, { count: openInquiryCount }] = await Promise.all([
     getStatementMenuRows(admin, yearMonth),
     getUnshippedLinesBefore(admin, yearMonth),
+    admin.from("gym_statement_inquiries").select("id", { count: "exact", head: true }).eq("status", "open"),
   ]);
 
   return (
@@ -37,6 +38,9 @@ export default async function AdminStatementsPage({
         <div>
           <p className="text-xs font-semibold text-orange-700">運営側管理画面</p>
           <h1 className="text-lg font-semibold">支払い明細</h1>
+          <Link href="/admin/statements/inquiries" className="text-sm text-neutral-500 hover:underline">
+            明細への問い合わせ{openInquiryCount ? `(未対応${openInquiryCount}件)` : ""} →
+          </Link>
         </div>
         <div className="flex items-center gap-3">
           <form className="flex items-center gap-2 text-sm">

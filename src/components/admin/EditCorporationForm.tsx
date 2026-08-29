@@ -3,26 +3,45 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function CreateCorporationForm() {
+interface Props {
+  corporationId: string;
+  initial: {
+    name: string;
+    invoiceRegistered: boolean;
+    invoiceRegistrationNumber: string | null;
+    address: string | null;
+    tel: string | null;
+    hpUrl: string | null;
+    contactName: string | null;
+    contactTel: string | null;
+    contactEmail: string | null;
+  };
+}
+
+export function EditCorporationForm({ corporationId, initial }: Props) {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [invoiceRegistered, setInvoiceRegistered] = useState(false);
-  const [invoiceRegistrationNumber, setInvoiceRegistrationNumber] = useState("");
-  const [address, setAddress] = useState("");
-  const [tel, setTel] = useState("");
-  const [hpUrl, setHpUrl] = useState("");
-  const [contactName, setContactName] = useState("");
-  const [contactTel, setContactTel] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
+  const [name, setName] = useState(initial.name);
+  const [invoiceRegistered, setInvoiceRegistered] = useState(initial.invoiceRegistered);
+  const [invoiceRegistrationNumber, setInvoiceRegistrationNumber] = useState(
+    initial.invoiceRegistrationNumber ?? "",
+  );
+  const [address, setAddress] = useState(initial.address ?? "");
+  const [tel, setTel] = useState(initial.tel ?? "");
+  const [hpUrl, setHpUrl] = useState(initial.hpUrl ?? "");
+  const [contactName, setContactName] = useState(initial.contactName ?? "");
+  const [contactTel, setContactTel] = useState(initial.contactTel ?? "");
+  const [contactEmail, setContactEmail] = useState(initial.contactEmail ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
-    const res = await fetch("/api/admin/corporations", {
-      method: "POST",
+    setSuccess(false);
+    const res = await fetch(`/api/admin/corporations/${corporationId}`, {
+      method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         name,
@@ -39,24 +58,16 @@ export function CreateCorporationForm() {
     setSubmitting(false);
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setError(typeof body.error === "string" ? body.error : "登録に失敗しました");
+      setError(typeof body.error === "string" ? body.error : "更新に失敗しました");
       return;
     }
-    setName("");
-    setInvoiceRegistered(false);
-    setInvoiceRegistrationNumber("");
-    setAddress("");
-    setTel("");
-    setHpUrl("");
-    setContactName("");
-    setContactTel("");
-    setContactEmail("");
+    setSuccess(true);
     router.refresh();
   }
 
   return (
     <form onSubmit={handleSubmit} className="card space-y-3">
-      <h2 className="font-medium">法人を新規登録</h2>
+      <h2 className="font-medium">法人マスタ編集</h2>
       <div>
         <label className="mb-1 block text-sm text-neutral-600">法人名</label>
         <input className="input" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -100,7 +111,7 @@ export function CreateCorporationForm() {
       </label>
       {invoiceRegistered && (
         <div>
-          <label className="mb-1 block text-sm text-neutral-600">インボイス登録番号</label>
+          <label className="mb-1 block text-sm text-neutral-600">インボイス登録番号(相手方・宛名欄に記載)</label>
           <input
             className="input"
             placeholder="T1234567890123"
@@ -111,8 +122,9 @@ export function CreateCorporationForm() {
         </div>
       )}
       {error && <p className="text-sm text-red-600">{error}</p>}
+      {success && <p className="text-sm text-green-700">更新しました。</p>}
       <button type="submit" disabled={submitting} className="btn-primary text-sm">
-        登録
+        更新
       </button>
     </form>
   );

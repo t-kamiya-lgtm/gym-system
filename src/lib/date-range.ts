@@ -99,3 +99,8 @@ export function dayRangeJstToIso(from: string, to: string): { startIso: string; 
 export function defaultRange(): { from: string; to: string } {
   return rangeForShortcut("thisMonth");
 }
+
+/** 任意のISOタイムスタンプをJSTの'YYYY-MM-DD'に変換する。 */
+export function dateJstFromIso(iso: string): string {
+  return new Date(iso).toLocaleDateString("sv-SE", { timeZone: "Asia/Tokyo" });
+}

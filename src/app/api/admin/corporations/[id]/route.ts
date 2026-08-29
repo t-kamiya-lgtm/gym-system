@@ -7,6 +7,12 @@ const updateSchema = z.object({
   name: z.string().min(1).optional(),
   invoiceRegistered: z.boolean().optional(),
   invoiceRegistrationNumber: z.string().min(1).nullable().optional(),
+  address: z.string().nullable().optional(),
+  tel: z.string().nullable().optional(),
+  hpUrl: z.string().nullable().optional(),
+  contactName: z.string().nullable().optional(),
+  contactTel: z.string().nullable().optional(),
+  contactEmail: z.string().nullable().optional(),
 });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -25,6 +31,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (body.data.invoiceRegistrationNumber !== undefined) {
     patch.invoice_registration_number = body.data.invoiceRegistrationNumber;
   }
+  if (body.data.address !== undefined) patch.address = body.data.address;
+  if (body.data.tel !== undefined) patch.tel = body.data.tel;
+  if (body.data.hpUrl !== undefined) patch.hp_url = body.data.hpUrl;
+  if (body.data.contactName !== undefined) patch.contact_name = body.data.contactName;
+  if (body.data.contactTel !== undefined) patch.contact_tel = body.data.contactTel;
+  if (body.data.contactEmail !== undefined) patch.contact_email = body.data.contactEmail;
 
   const admin = createSupabaseAdminClient();
   const { error } = await admin.from("gym_corporations").update(patch).eq("id", id);

@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { sendNewOrderNotification } from "@/lib/email";
+import { createOrderLineFromOrder } from "@/lib/order-lines";
+import { verifyOrderWebhookSecret } from "@/lib/order-webhook-auth";
 
 /**
  * Supabaseの gym_order_notify トリガー(0003マイグレーション)から呼ばれる。
- * 新規注文が入った店舗・法人に登録された通知先メールへ「〇〇様の注文が入りました」を送る。
+ * ①新規注文が入った店舗・法人に登録された通知先メールへ「〇〇様の注文が入りました」を送る。
+ * ②受注明細台帳(gym_order_lines)に、出荷フラグ「未出荷」の行を作成する
+ *   (出荷確定を待たず、受注時点で受注一覧に載せるため)。
  */
 export async function POST(request: Request) {
-  const secret = request.headers.get("x-webhook-secret");
-  if (!process.env.GYM_ORDER_WEBHOOK_SECRET || secret !== process.env.GYM_ORDER_WEBHOOK_SECRET) {
+  if (!verifyOrderWebhookSecret(request)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
@@ -16,6 +19,8 @@ export async function POST(request: Request) {
   if (!body.order_id || !body.store_id) {
     return NextResponse.json({ error: "invalid payload" }, { status: 400 });
   }
+
+  await createOrderLineFromOrder(createSupabaseAdminClient(), body.order_id, body.store_id);
 
   const admin = createSupabaseAdminClient();
   const { data: order } = await admin

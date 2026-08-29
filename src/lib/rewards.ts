@@ -28,6 +28,14 @@ export function currentYearMonthJst(): string {
   return new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Tokyo" }).slice(0, 7);
 }
 
+/** 前月の'YYYY-MM'(JST基準)。支払い明細メニューのデフォルト対象月に使う。 */
+export function previousYearMonthJst(): string {
+  const [y, m] = currentYearMonthJst().split("-").map(Number);
+  const py = m === 1 ? y - 1 : y;
+  const pm = m === 1 ? 12 : m - 1;
+  return `${py}-${String(pm).padStart(2, "0")}`;
+}
+
 /** JSTの'YYYY-MM'から、その月の[開始日, 翌月開始日)を'YYYY-MM-DD'(date型カラム比較用)で返す。 */
 export function monthDateRangeJst(yearMonth: string): { startDate: string; endDate: string } {
   const [y, m] = yearMonth.split("-").map(Number);

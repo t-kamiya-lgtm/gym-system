@@ -3,6 +3,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getCorporationStatement } from "@/lib/statements";
 import { currentYearMonthJst } from "@/lib/rewards";
 import { AgreeButton } from "@/components/partner/AgreeButton";
+import { InquiryForm } from "@/components/partner/InquiryForm";
 
 export default async function PartnerStatementsPage({
   searchParams,
@@ -109,6 +110,8 @@ export default async function PartnerStatementsPage({
           </tbody>
         </table>
       </div>
+
+      <InquiryForm yearMonth={yearMonth} />
       </>
       )}
     </div>

@@ -30,9 +30,11 @@ export default function PartnerLoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-sky-50">
       <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 rounded-lg border border-neutral-200 bg-white p-8 shadow-sm">
         <h1 className="text-center text-xl font-semibold">
-          プロテインモンスター オフィシャルパートナー
+          プロテインモンスター
           <br />
-          法人パートナーログイン
+          オフィシャルパートナー
+          <br />
+          管理画面ログイン
         </h1>
         <div>
           <label className="mb-1 block text-sm text-neutral-600">メールアドレス</label>

@@ -1,7 +1,7 @@
 import { getCurrentPartner } from "@/lib/auth-partner";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getCorporationStatement } from "@/lib/statements";
-import { currentYearMonthJst } from "@/lib/rewards";
+import { currentYearMonthJst, transferDueDateJst } from "@/lib/rewards";
 import { AgreeButton } from "@/components/partner/AgreeButton";
 import { InquiryForm } from "@/components/partner/InquiryForm";
 
@@ -54,6 +54,10 @@ export default async function PartnerStatementsPage({
           <div>
             <dt className="text-neutral-500">最終報酬額</dt>
             <dd className="text-lg font-semibold">¥{statement.finalAmount.toLocaleString()}</dd>
+          </div>
+          <div>
+            <dt className="text-neutral-500">振込予定日</dt>
+            <dd className="text-lg font-semibold">{transferDueDateJst(yearMonth)}</dd>
           </div>
         </dl>
 

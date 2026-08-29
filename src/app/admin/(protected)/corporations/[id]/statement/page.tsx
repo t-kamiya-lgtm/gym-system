@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getCorporationStatement } from "@/lib/statements";
 import { getStorePointsForCorporation } from "@/lib/points";
-import { currentYearMonthJst, dailyPointBreakdown } from "@/lib/rewards";
+import { currentYearMonthJst, dailyPointBreakdown, transferDueDateJst } from "@/lib/rewards";
 import { AddAdjustmentForm } from "@/components/admin/AddAdjustmentForm";
 import { ReopenStatementButton } from "@/components/admin/ReopenStatementButton";
 import { CloseMonthButton } from "@/components/admin/CloseMonthButton";
@@ -62,6 +62,8 @@ export default async function CorporationStatementPage({
           <dd>¥{statement.adjustmentTotal.toLocaleString()}</dd>
           <dt className="font-medium text-neutral-700">最終報酬額</dt>
           <dd className="font-medium">¥{statement.finalAmount.toLocaleString()}</dd>
+          <dt className="text-neutral-500">振込予定日</dt>
+          <dd>{transferDueDateJst(yearMonth)}</dd>
           <dt className="text-neutral-500">状況</dt>
           <dd>
             {statement.status === "agreed" && (

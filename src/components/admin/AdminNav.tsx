@@ -7,6 +7,7 @@ const links = [
   { href: "/admin", label: "ダッシュボード" },
   { href: "/admin/corporations", label: "法人・店舗管理" },
   { href: "/admin/orders", label: "注文一覧" },
+  { href: "/admin/statements", label: "支払い明細" },
   { href: "/admin/settings", label: "設定" },
 ];
 

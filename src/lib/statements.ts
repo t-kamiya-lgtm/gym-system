@@ -272,6 +272,51 @@ export async function bulkCloseMonth(
   return { closedCorporationIds: targets };
 }
 
+export interface StatementMenuRow {
+  corporationId: string;
+  corporationName: string;
+  orderCount: number;
+  unitPrice: number;
+  finalAmount: number;
+  status: "not_closed" | "closed" | "agreed";
+}
+
+/** 支払い明細メニュー画面用。対象月の全法人の状況を一覧で返す。 */
+export async function getStatementMenuRows(admin: SupabaseClient, yearMonth: string): Promise<StatementMenuRow[]> {
+  const [{ data: corporations }, { data: statementRows }] = await Promise.all([
+    admin.from("gym_corporations").select("id, name").order("name"),
+    admin
+      .from("gym_monthly_statements")
+      .select("corporation_id, status, unit_price, final_amount")
+      .eq("year_month", `${yearMonth}-01`),
+  ]);
+  const statementByCorp = new Map((statementRows ?? []).map((s) => [s.corporation_id, s]));
+
+  const { startDate, endDate } = monthDateRangeJst(yearMonth);
+  const { data: lines } = await admin
+    .from("gym_order_lines")
+    .select("corporation_id")
+    .eq("shipment_flag", "shipped")
+    .gte("order_date", startDate)
+    .lt("order_date", endDate);
+  const countByCorp = new Map<string, number>();
+  for (const l of lines ?? []) {
+    countByCorp.set(l.corporation_id, (countByCorp.get(l.corporation_id) ?? 0) + 1);
+  }
+
+  return (corporations ?? []).map((c) => {
+    const s = statementByCorp.get(c.id);
+    return {
+      corporationId: c.id,
+      corporationName: c.name,
+      orderCount: countByCorp.get(c.id) ?? 0,
+      unitPrice: s?.unit_price ?? 0,
+      finalAmount: s?.final_amount ?? 0,
+      status: (s?.status as "closed" | "agreed" | undefined) ?? "not_closed",
+    };
+  });
+}
+
 /** 法人側の同意操作。運営側が月末確定済み(closed)の明細のみ同意できる。 */
 export async function agreeToStatement(
   admin: SupabaseClient,

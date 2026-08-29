@@ -7,17 +7,22 @@ export function CloseMonthButton({
   corporationId,
   yearMonth,
   label,
+  confirmMessage,
 }: {
-  corporationId: string;
+  corporationId?: string;
   yearMonth: string;
   label: string;
+  confirmMessage?: string;
 }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleClose() {
-    if (!confirm(`${yearMonth}分の月末確定処理を行います。パートナーに支払い明細更新連絡が送信されます。よろしいですか?`)) {
+    const message =
+      confirmMessage ??
+      `${yearMonth}分の月末確定処理を行います。パートナーに支払い明細更新連絡が送信されます。よろしいですか?`;
+    if (!confirm(message)) {
       return;
     }
     setSubmitting(true);

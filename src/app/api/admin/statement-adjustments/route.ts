@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { requireOperatorAdmin } from "@/lib/require-operator-role";
-import { reopenStatement } from "@/lib/statements";
+import { closeMonthForCorporation } from "@/lib/statements";
 
 const createSchema = z.object({
   corporationId: z.string().uuid(),
@@ -14,8 +14,8 @@ const createSchema = z.object({
 
 /**
  * 明細確定後のキャンセル反映漏れ・計算エラー等を吸収するための手動加算/減算(決定事項)。
- * 月次確認(同意)後の修正は運営側管理画面からのみ行う。既に同意済みの月であれば、
- * 調整の追加と同時にロックを解除してdraft(未承認)に戻し、法人側の再同意を必要とする。
+ * 月次確認(同意)後の修正は運営側管理画面からのみ行う。調整の追加と同時に明細を再集計し、
+ * 同意済みだった場合はclosed(未承認)に戻して法人側の再同意を必要とする。
  */
 export async function POST(request: Request) {
   const check = await requireOperatorAdmin();
@@ -41,6 +41,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  await reopenStatement(admin, corporationId, yearMonth);
+  await closeMonthForCorporation(admin, corporationId, yearMonth, check.operator.email);
   return NextResponse.json({ ok: true }, { status: 201 });
 }

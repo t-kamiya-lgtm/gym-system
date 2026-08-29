@@ -5,6 +5,7 @@ import { getStorePointsForCorporation } from "@/lib/points";
 import { currentYearMonthJst, dailyPointBreakdown } from "@/lib/rewards";
 import { AddAdjustmentForm } from "@/components/admin/AddAdjustmentForm";
 import { ReopenStatementButton } from "@/components/admin/ReopenStatementButton";
+import { CloseMonthButton } from "@/components/admin/CloseMonthButton";
 
 export default async function CorporationStatementPage({
   params,
@@ -61,24 +62,49 @@ export default async function CorporationStatementPage({
           <dd>¥{statement.adjustmentTotal.toLocaleString()}</dd>
           <dt className="font-medium text-neutral-700">最終報酬額</dt>
           <dd className="font-medium">¥{statement.finalAmount.toLocaleString()}</dd>
-          <dt className="text-neutral-500">同意状況</dt>
+          <dt className="text-neutral-500">状況</dt>
           <dd>
-            {statement.status === "agreed" ? (
+            {statement.status === "agreed" && (
               <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-700">
                 同意済・ロック中({statement.agreedAt})
               </span>
-            ) : (
-              <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">未同意(ライブ計算中)</span>
+            )}
+            {statement.status === "closed" && (
+              <span className="rounded bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
+                月末確定済み(法人側の同意待ち)
+              </span>
+            )}
+            {statement.status === "not_closed" && (
+              <span className="rounded bg-orange-100 px-2 py-0.5 text-xs text-orange-700">未確定</span>
             )}
           </dd>
         </dl>
 
-        {statement.status === "agreed" && (
+        {statement.status === "not_closed" && (
           <div className="border-t border-neutral-100 pt-3">
             <p className="mb-2 text-xs text-neutral-500">
-              同意済みの明細を修正するには、まずロックを解除してください。解除すると法人側は再度同意が必要になります。
+              まだ月末確定処理が行われていません。確定すると、上記の数値が固定され、パートナー側の管理画面に明細が表示されます。
             </p>
-            <ReopenStatementButton corporationId={id} yearMonth={yearMonth} />
+            <CloseMonthButton corporationId={id} yearMonth={yearMonth} label="この法人を月末確定する" />
+          </div>
+        )}
+
+        {statement.status !== "not_closed" && (
+          <div className="flex flex-wrap items-center gap-3 border-t border-neutral-100 pt-3">
+            <div>
+              <p className="mb-2 text-xs text-neutral-500">
+                受注明細を修正して数値を再計算する場合は、下のボタンから再集計してください。
+              </p>
+              <CloseMonthButton corporationId={id} yearMonth={yearMonth} label="受注明細台帳から再集計する" />
+            </div>
+            {statement.status === "agreed" && (
+              <div>
+                <p className="mb-2 text-xs text-neutral-500">
+                  数値を変えずに同意状況だけ戻す場合(問い合わせ対応後の再確認依頼等)はこちら。
+                </p>
+                <ReopenStatementButton corporationId={id} yearMonth={yearMonth} />
+              </div>
+            )}
           </div>
         )}
 

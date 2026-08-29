@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>法人パートナー管理画面 操作マニュアル</title>
+<style>
+  :root {
+    --bg: #f0f9ff;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --ink: #171717;
+    --muted: #6b7280;
+    --accent: #0369a1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.7;
+  }
+  header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 20px 16px;
+    text-align: center;
+  }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 1.3rem;
+  }
+  header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 24px 16px 80px;
+  }
+  nav.toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+  nav.toc h2 {
+    font-size: 0.95rem;
+    margin: 0 0 10px;
+    color: var(--muted);
+  }
+  nav.toc ol {
+    margin: 0;
+    padding-left: 20px;
+  }
+  nav.toc a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  nav.toc a:hover { text-decoration: underline; }
+  section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    scroll-margin-top: 16px;
+  }
+  section h2 {
+    font-size: 1.1rem;
+    margin: 0 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--bg);
+  }
+  section h3 {
+    font-size: 0.98rem;
+    margin: 18px 0 8px;
+  }
+  section p, section li {
+    font-size: 0.92rem;
+  }
+  .note {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin: 10px 0;
+  }
+  code {
+    background: #f3f4f6;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.85em;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin: 10px 0;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    text-align: left;
+  }
+  th { background: #f9fafb; }
+  .marker-yellow { background: #fef9c3; }
+  .marker-pink { background: #fce7f3; }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    padding: 20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>プロテインモンスター オフィシャルパートナー<br>法人パートナー管理画面 操作マニュアル</h1>
+  <p>本マニュアルはパートナー(法人・店舗)向けの管理画面の使い方をまとめたものです。</p>
+</header>
+
+<div class="wrap">
+
+  <nav class="toc">
+    <h2>目次</h2>
+    <ol>
+      <li><a href="#login">ログイン方法</a></li>
+      <li><a href="#common">共通の操作(期間指定・法人切り替え)</a></li>
+      <li><a href="#dashboard">ダッシュボード(実績サマリー)</a></li>
+      <li><a href="#orders">注文一覧</a></li>
+      <li><a href="#members">会員別実績</a></li>
+      <li><a href="#statements">支払い明細</a></li>
+      <li><a href="#notifications">通知設定</a></li>
+      <li><a href="#contact">お問い合わせ</a></li>
+    </ol>
+  </nav>
+
+  <section id="login">
+    <h2>1. ログイン方法</h2>
+    <p>弊社から発行された「メールアドレス」「パスワード」でログインしてください。</p>
+    <ul>
+      <li>ログインURL: 管理画面のURLに <code>/partner/login</code> を付けたページ</li>
+      <li>パスワードを忘れた場合は、弊社担当者までご連絡ください(再発行いたします)</li>
+    </ul>
+  </section>
+
+  <section id="common">
+    <h2>2. 共通の操作</h2>
+    <h3>期間指定</h3>
+    <p>ダッシュボード・注文一覧・会員別実績の各画面では、上部の「開始日」〜「終了日」で集計対象の期間を指定できます。よく使う期間はショートカットボタン(当日・直近7日間・当月・前月・前週・年間)からワンタップで選べます。</p>
+    <div class="note">この期間指定は実績の「参考値」を確認するためのものです。実際にお支払いする金額は、暦月(1日〜末日)単位で「支払い明細」画面にて別途確定します。</div>
+    <h3>複数法人をお持ちの場合</h3>
+    <p>1つのログインで複数の法人(例: 会社名義の店舗と、個人名義のフランチャイズ店など)を管理されている場合、画面右上に法人を切り替えるプルダウンが表示されます。切り替えると、表示される実績・明細がすべてその法人のものに変わります。</p>
+  </section>
+
+  <section id="dashboard">
+    <h2>3. ダッシュボード(実績サマリー)</h2>
+    <p>ログイン後、最初に表示される画面です。指定した期間の合計点数・報酬単価・報酬額と、店舗ごとの内訳(単品/定期の点数、件数、継続定期人数、報酬単価・報酬合計)が確認できます。</p>
+    <table>
+      <thead><tr><th>報酬単価</th><th>行の色</th><th>点数の目安</th></tr></thead>
+      <tbody>
+        <tr><td>300円/点</td><td>白(無地)</td><td>1〜9点</td></tr>
+        <tr><td>450円/点</td><td class="marker-yellow">薄い黄色</td><td>10〜99点</td></tr>
+        <tr><td>600円/点</td><td class="marker-pink">薄いピンク</td><td>100点以上</td></tr>
+      </tbody>
+    </table>
+    <p>各店舗の「受注詳細」リンクから、その店舗の注文明細(会員名・商品名・種別・出荷日)を確認できます。</p>
+  </section>
+
+  <section id="orders">
+    <h2>4. 注文一覧</h2>
+    <p>期間・店舗・注文番号で絞り込みながら、注文明細を新着順に一覧できます。日付・注文番号・会員名・店舗名・商品名・購入点数・税別金額・種別(単品/定期とその頻度)・性別・年齢を確認できます。</p>
+  </section>
+
+  <section id="members">
+    <h2>5. 会員別実績</h2>
+    <p>会員(お客様)ごとに、累計購入点数の多い順で一覧表示されます。単品/定期それぞれの累計点数、合計購入点数、最終購入日を確認できます。</p>
+    <h3>メモ機能</h3>
+    <p>各会員の行には「メモ1」「メモ2」の入力欄があります。担当インストラクター名や、店舗独自の会員番号などを自由に記入し、「保存」ボタンでその場で保存できます。メモは店舗ごとに保存されます。</p>
+  </section>
+
+  <section id="statements">
+    <h2>6. 支払い明細</h2>
+    <p>暦月(1日〜末日)単位で、合計点数・報酬単価・報酬額を確認できます。</p>
+    <h3>同意について</h3>
+    <p>内容を確認し「この内容に同意する」ボタンを押すと、その時点の金額が確定(ロック)されます。ロック後は、内容が変わることはありません。</p>
+    <div class="note">ロック後に内容の誤り(キャンセルの反映漏れ等)が判明した場合は、弊社担当者が修正いたします。修正されると明細は再度「未同意」の状態に戻りますので、内容をご確認のうえ、お手数ですが再度同意をお願いします。</div>
+    <h3>ダウンロード</h3>
+    <ul>
+      <li><strong>PDFダウンロード</strong>: インボイス制度に対応した支払い明細書(発行元情報・登録番号を含む)をダウンロードできます</li>
+      <li><strong>購入明細CSVダウンロード</strong>: 日付・会員名・購入点数・商品種別(単品/定期とその頻度)の一覧をCSVでダウンロードできます</li>
+    </ul>
+  </section>
+
+  <section id="notifications">
+    <h2>7. 通知設定</h2>
+    <p>新規注文が入った際にメールで通知を受け取れます。「設定」画面から、法人全体宛て・店舗ごと宛てのメールアドレスをそれぞれ複数登録できます。</p>
+  </section>
+
+  <section id="contact">
+    <h2>8. お問い合わせ</h2>
+    <p>操作方法やアカウントに関するご不明点は、下記までお問い合わせください。</p>
+    <p>
+      株式会社プライムダイレクト<br>
+      〒453-0809 愛知県名古屋市中村区上米野町4-20<br>
+      Email: <a href="mailto:info@primedirect.jp">info@primedirect.jp</a>
+    </p>
+  </section>
+
+</div>
+
+<footer>プロテインモンスター オフィシャルパートナー管理画面</footer>
+
+</body>
+</html>

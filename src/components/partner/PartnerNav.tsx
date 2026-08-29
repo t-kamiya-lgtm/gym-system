@@ -8,7 +8,7 @@ const links = [
   { href: "/partner/orders", label: "注文一覧" },
   { href: "/partner/members", label: "会員別実績" },
   { href: "/partner/statements", label: "支払い明細" },
-  { href: "/partner/settings", label: "通知設定" },
+  { href: "/partner/settings", label: "設定" },
 ];
 
 export function PartnerNav() {

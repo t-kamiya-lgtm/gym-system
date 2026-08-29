@@ -39,7 +39,23 @@ export default async function PartnerSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg font-semibold">通知設定</h1>
+      <h1 className="text-lg font-semibold">設定</h1>
+
+      <div className="card">
+        <h2 className="mb-1 font-medium">操作マニュアル</h2>
+        <p className="mb-3 text-xs text-neutral-500">
+          管理画面の使い方をまとめたマニュアルです。ログイン方法、各画面の見方、支払い明細の確認・同意方法などを説明しています。
+        </p>
+        <a
+          href="/manual.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-md border border-neutral-300 px-4 py-2 text-sm transition hover:bg-neutral-50"
+        >
+          操作マニュアルを開く
+        </a>
+      </div>
+
       <NotificationEmailsManager emails={rows} scopeOptions={scopeOptions} />
     </div>
   );

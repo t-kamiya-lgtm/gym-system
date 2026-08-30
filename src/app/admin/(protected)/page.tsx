@@ -24,12 +24,14 @@ export default async function AdminDashboardPage({
 
   const admin = createSupabaseAdminClient();
 
-  const [{ stores }, { data: tierRows }, { data: corporations }, { data: storeMeta }] = await Promise.all([
-    getAllStorePointsInRange(admin, from, to),
-    admin.from("gym_reward_tiers").select("min_points, max_points, unit_price").order("min_points"),
-    admin.from("gym_corporations").select("id, corp_no"),
-    admin.from("gym_stores").select("id, store_no"),
-  ]);
+  const [{ stores }, { data: tierRows }, { data: corporations }, { data: storeMeta }, { data: storeCoupons }] =
+    await Promise.all([
+      getAllStorePointsInRange(admin, from, to),
+      admin.from("gym_reward_tiers").select("min_points, max_points, unit_price").order("min_points"),
+      admin.from("gym_corporations").select("id, corp_no"),
+      admin.from("gym_stores").select("id, store_no"),
+      admin.from("gym_store_coupons").select("store_id, coupon_id"),
+    ]);
 
   const tiers: RewardTier[] = (tierRows ?? []).map((t) => ({
     minPoints: t.min_points,
@@ -38,6 +40,13 @@ export default async function AdminDashboardPage({
   }));
   const corpNoById = new Map((corporations ?? []).map((c) => [c.id, c.corp_no]));
   const storeNoById = new Map((storeMeta ?? []).map((s) => [s.id, s.store_no]));
+
+  const couponIdByStoreId = new Map((storeCoupons ?? []).map((sc) => [sc.store_id, sc.coupon_id]));
+  const couponIds = Array.from(couponIdByStoreId.values());
+  const { data: couponRows } = couponIds.length
+    ? await admin.from("coupons").select("id, code").in("id", couponIds)
+    : { data: [] as { id: string; code: string | null }[] };
+  const codeByCouponId = new Map((couponRows ?? []).map((c) => [c.id, c.code]));
 
   const activeCounts = await getActiveSubscriberCountsByStore(admin, stores.map((s) => s.storeId));
 
@@ -152,6 +161,7 @@ export default async function AdminDashboardPage({
               <th className="py-2">店舗No</th>
               <th className="py-2">店舗</th>
               <th className="py-2">法人</th>
+              <th className="py-2">クーポンコード</th>
               <th className="py-2">点数</th>
               <th className="py-2">件数</th>
               <th className="py-2">売上</th>
@@ -167,6 +177,8 @@ export default async function AdminDashboardPage({
           <tbody>
             {storeRows.map((s) => {
               const storeUnitPrice = unitPriceForPoints(s.points, tiers);
+              const couponId = couponIdByStoreId.get(s.storeId);
+              const couponCode = couponId ? codeByCouponId.get(couponId) : null;
               return (
                 <tr key={s.storeId} className={`border-b border-neutral-100 ${tierRowClass(storeUnitPrice)}`}>
                   <td className="py-2 font-mono">
@@ -181,6 +193,7 @@ export default async function AdminDashboardPage({
                     </Link>
                   </td>
                   <td className="py-2">{s.corporationName}</td>
+                  <td className="py-2 font-mono">{couponCode ?? "-"}</td>
                   <td className="py-2">{s.points.toLocaleString()} 点</td>
                   <td className="py-2">{s.orderCount.toLocaleString()} 件</td>
                   <td className="py-2">¥{s.revenue.toLocaleString()}</td>
@@ -196,7 +209,7 @@ export default async function AdminDashboardPage({
             })}
             {storeRows.length === 0 && (
               <tr>
-                <td colSpan={13} className="py-6 text-center text-neutral-400">
+                <td colSpan={14} className="py-6 text-center text-neutral-400">
                   店舗が登録されていません
                 </td>
               </tr>

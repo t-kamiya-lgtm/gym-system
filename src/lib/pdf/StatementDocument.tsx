@@ -74,21 +74,23 @@ export function StatementDocument({
         <Text style={styles.title}>支払い明細書</Text>
         <Text style={styles.subtitle}>対象月: {statement.yearMonth}</Text>
 
-        <View style={{ marginBottom: 16 }}>
-          <Text style={{ fontSize: 12, marginBottom: 4 }}>{corporationName} 様</Text>
-          {corporationAddress && <Text style={styles.subtitle}>{corporationAddress}</Text>}
-          {invoiceRegistered && invoiceRegistrationNumber && (
-            <Text style={styles.subtitle}>登録番号: {invoiceRegistrationNumber}</Text>
-          )}
-        </View>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 16 }}>
+          <View>
+            <Text style={{ fontSize: 12, marginBottom: 4 }}>{corporationName} 様</Text>
+            {corporationAddress && <Text style={styles.subtitle}>{corporationAddress}</Text>}
+            {invoiceRegistered && invoiceRegistrationNumber && (
+              <Text style={styles.subtitle}>登録番号: {invoiceRegistrationNumber}</Text>
+            )}
+          </View>
 
-        <View style={{ marginBottom: 16 }}>
-          <Text style={styles.subtitle}>発行元: {OWN_COMPANY.name}</Text>
-          <Text style={styles.subtitle}>登録番号: {OWN_COMPANY.invoiceRegistrationNumber}</Text>
-          <Text style={styles.subtitle}>
-            〒{OWN_COMPANY.postalCode} {OWN_COMPANY.address}
-          </Text>
-          <Text style={styles.subtitle}>{OWN_COMPANY.email}</Text>
+          <View style={{ alignItems: "flex-end" }}>
+            <Text style={[styles.subtitle, { textAlign: "right" }]}>発行元: {OWN_COMPANY.name}</Text>
+            <Text style={[styles.subtitle, { textAlign: "right" }]}>登録番号: {OWN_COMPANY.invoiceRegistrationNumber}</Text>
+            <Text style={[styles.subtitle, { textAlign: "right" }]}>
+              〒{OWN_COMPANY.postalCode} {OWN_COMPANY.address}
+            </Text>
+            <Text style={[styles.subtitle, { textAlign: "right" }]}>{OWN_COMPANY.email}</Text>
+          </View>
         </View>
 
         <View style={styles.headerRow}>

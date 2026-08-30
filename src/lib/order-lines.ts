@@ -257,3 +257,36 @@ export async function getUnshippedLinesBefore(
 
   return (lines ?? []).map((l) => toOrderLineRow(l, storeNameById));
 }
+
+/**
+ * 受注日ベースで期間を横断した受注明細一覧(運営側の注文一覧画面で、出荷済に加えて
+ * 未出荷・キャンセル等も表示するために使う)。
+ */
+export async function getOrderLinesInDateRange(
+  admin: SupabaseClient,
+  startDate: string,
+  endDate: string,
+): Promise<OrderLineRow[]> {
+  const [{ data: lines }, { data: stores }] = await Promise.all([
+    admin
+      .from("gym_order_lines")
+      .select(ORDER_LINE_COLUMNS)
+      .gte("order_date", startDate)
+      .lt("order_date", endDate)
+      .order("order_date"),
+    admin.from("gym_stores").select("id, name"),
+  ]);
+  const storeNameById = new Map((stores ?? []).map((s) => [s.id, s.name]));
+
+  return (lines ?? []).map((l) => toOrderLineRow(l, storeNameById));
+}
+
+/** 店舗ごとの累計出荷済点数(全期間)。店舗・クーポン管理タブの「累計販売数」に使う。 */
+export async function getLifetimeShippedQuantityByStore(admin: SupabaseClient): Promise<Map<string, number>> {
+  const { data: lines } = await admin.from("gym_order_lines").select("store_id, quantity").eq("shipment_flag", "shipped");
+  const totals = new Map<string, number>();
+  for (const l of lines ?? []) {
+    totals.set(l.store_id, (totals.get(l.store_id) ?? 0) + l.quantity);
+  }
+  return totals;
+}

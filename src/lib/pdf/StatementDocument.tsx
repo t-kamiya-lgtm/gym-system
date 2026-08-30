@@ -1,10 +1,23 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, Font } from "@react-pdf/renderer";
 import type { CorporationStatement } from "@/lib/statements";
 import { OWN_COMPANY } from "@/lib/company-info";
 import { transferDueDateJst } from "@/lib/rewards";
 
+// 日本語(氏名・住所・法人名等)を含むPDFのため、和文フォントを登録する。
+// Helvetica等の標準フォントは和文グリフを持たず文字化けするため必須。
+// Googleフォントのgstatic配信URLは発行後不変のため、直接参照して問題ない。
+Font.register({
+  family: "Noto Sans JP",
+  fonts: [
+    { src: "https://fonts.gstatic.com/s/notosansjp/v56/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFBEj75s.ttf", fontWeight: 400 },
+    { src: "https://fonts.gstatic.com/s/notosansjp/v56/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFPYk75s.ttf", fontWeight: 700 },
+  ],
+});
+// 和文は単語区切りにハイフンを入れる概念がないため、既定のハイフネーションを無効化する。
+Font.registerHyphenationCallback((word) => [word]);
+
 const styles = StyleSheet.create({
-  page: { padding: 32, fontSize: 10, fontFamily: "Helvetica" },
+  page: { padding: 32, fontSize: 10, fontFamily: "Noto Sans JP" },
   title: { fontSize: 16, marginBottom: 4 },
   subtitle: { fontSize: 10, marginBottom: 16, color: "#555" },
   row: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#ddd", paddingVertical: 4 },

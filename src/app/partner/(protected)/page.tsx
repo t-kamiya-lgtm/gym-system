@@ -3,7 +3,7 @@ import { getCurrentPartner } from "@/lib/auth-partner";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getStorePointsForCorporationInRange, getActiveSubscriberCountsByStore } from "@/lib/points";
 import { unitPriceForPoints } from "@/lib/rewards";
-import { defaultRange } from "@/lib/date-range";
+import { defaultRange, rangeForShortcut } from "@/lib/date-range";
 import type { RewardTier } from "@/lib/types";
 import { DateRangePicker } from "@/components/admin/DateRangePicker";
 
@@ -26,9 +26,10 @@ export default async function PartnerDashboardPage({
   const to = toParam ?? def.to;
 
   const admin = createSupabaseAdminClient();
-  const [{ stores }, { data: tierRows }] = await Promise.all([
+  const [{ stores }, { data: tierRows }, { data: storeCoupons }] = await Promise.all([
     getStorePointsForCorporationInRange(admin, partner.corporationId, from, to),
     admin.from("gym_reward_tiers").select("min_points, max_points, unit_price").order("min_points"),
+    admin.from("gym_store_coupons").select("store_id, coupon_id"),
   ]);
   const tiers: RewardTier[] = (tierRows ?? []).map((t) => ({
     minPoints: t.min_points,
@@ -36,12 +37,20 @@ export default async function PartnerDashboardPage({
     unitPrice: t.unit_price,
   }));
 
+  const couponIdByStoreId = new Map((storeCoupons ?? []).map((sc) => [sc.store_id, sc.coupon_id]));
+  const couponIds = Array.from(couponIdByStoreId.values());
+  const { data: couponRows } = couponIds.length
+    ? await admin.from("coupons").select("id, code").in("id", couponIds)
+    : { data: [] as { id: string; code: string | null }[] };
+  const codeByCouponId = new Map((couponRows ?? []).map((c) => [c.id, c.code]));
+
   const totalPoints = stores.reduce((sum, s) => sum + s.points, 0);
   const unitPrice = unitPriceForPoints(totalPoints, tiers);
   const rewardAmount = totalPoints * unitPrice;
   const activeCounts = await getActiveSubscriberCountsByStore(admin, stores.map((s) => s.storeId));
 
   const storeRows = [...stores].sort((a, b) => b.points - a.points);
+  const thisMonth = rangeForShortcut("thisMonth");
 
   return (
     <div className="space-y-6">
@@ -71,6 +80,7 @@ export default async function PartnerDashboardPage({
           <thead>
             <tr className="border-b border-neutral-200 text-left text-neutral-500">
               <th className="py-2">店舗名</th>
+              <th className="py-2">クーポンコード</th>
               <th className="py-2">単品点数</th>
               <th className="py-2">定期点数</th>
               <th className="py-2">合計点数</th>
@@ -84,9 +94,19 @@ export default async function PartnerDashboardPage({
           <tbody>
             {storeRows.map((s) => {
               const storeUnitPrice = unitPriceForPoints(s.points, tiers);
+              const couponId = couponIdByStoreId.get(s.storeId);
+              const couponCode = couponId ? codeByCouponId.get(couponId) : null;
               return (
                 <tr key={s.storeId} className={`border-b border-neutral-100 ${tierRowClass(storeUnitPrice)}`}>
-                  <td className="py-2">{s.storeName}</td>
+                  <td className="py-2">
+                    <Link
+                      href={`/partner/orders?store=${encodeURIComponent(s.storeName)}&from=${thisMonth.from}&to=${thisMonth.to}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {s.storeName}
+                    </Link>
+                  </td>
+                  <td className="py-2 font-mono">{couponCode ?? "-"}</td>
                   <td className="py-2">{s.oneTimePoints.toLocaleString()} 点</td>
                   <td className="py-2">{s.subscriptionPoints.toLocaleString()} 点</td>
                   <td className="py-2">{s.points.toLocaleString()} 点</td>
@@ -107,7 +127,7 @@ export default async function PartnerDashboardPage({
             })}
             {storeRows.length === 0 && (
               <tr>
-                <td colSpan={9} className="py-6 text-center text-neutral-400">
+                <td colSpan={10} className="py-6 text-center text-neutral-400">
                   店舗が登録されていません
                 </td>
               </tr>
@@ -115,7 +135,7 @@ export default async function PartnerDashboardPage({
           </tbody>
         </table>
         <p className="mt-2 text-xs text-neutral-500">
-          報酬単価・行の色分けはこの店舗単独の月間合計点数に基づく参考値です(300円=白 / 450円=薄い黄色 / 600円=薄いピンク)。実際の支払い額は法人配下の店舗合計点数で算出したものが正式な金額です(上のサマリー、および「支払い明細」メニューで月次に確定します)。
+          報酬単価・行の色分けはこの店舗単独の月間合計点数に基づく参考値です(300円=白 / 450円=薄い黄色 / 600円=薄いピンク)。実際の支払い額は法人配下の店舗合計点数で算出したものが正式な金額です(上のサマリー、および「支払い明細」メニューで月次に確定します)。店舗名をクリックすると、当月の注文一覧が表示されます。
         </p>
       </div>
     </div>

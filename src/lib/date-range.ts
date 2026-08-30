@@ -100,6 +100,11 @@ export function defaultRange(): { from: string; to: string } {
   return rangeForShortcut("thisMonth");
 }
 
+/** JSTの'YYYY-MM-DD'(from/to、両端含む)から、date型カラム比較用の[開始日, 終了日)を'YYYY-MM-DD'で作る。 */
+export function dayRangeJstToDates(from: string, to: string): { startDate: string; endDate: string } {
+  return { startDate: from, endDate: addDaysJst(to, 1) };
+}
+
 /** 任意のISOタイムスタンプをJSTの'YYYY-MM-DD'に変換する。 */
 export function dateJstFromIso(iso: string): string {
   return new Date(iso).toLocaleDateString("sv-SE", { timeZone: "Asia/Tokyo" });

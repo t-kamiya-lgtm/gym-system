@@ -2,7 +2,7 @@ import Link from "next/link";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getAllStorePointsInRange, getActiveSubscriberCountsByStore } from "@/lib/points";
 import { unitPriceForPoints } from "@/lib/rewards";
-import { defaultRange } from "@/lib/date-range";
+import { defaultRange, rangeForShortcut } from "@/lib/date-range";
 import { managementCode, type RewardTier } from "@/lib/types";
 import { DateRangePicker } from "@/components/admin/DateRangePicker";
 
@@ -72,6 +72,7 @@ export default async function AdminDashboardPage({
   const grandTotalReward = corpRows.reduce((sum, c) => sum + c.rewardAmount, 0);
 
   const storeRows = [...stores].sort((a, b) => b.revenue - a.revenue);
+  const thisMonth = rangeForShortcut("thisMonth");
 
   return (
     <div className="space-y-6">
@@ -171,7 +172,14 @@ export default async function AdminDashboardPage({
                   <td className="py-2 font-mono">
                     {managementCode(corpNoById.get(s.corporationId) ?? 0, storeNoById.get(s.storeId) ?? 0)}
                   </td>
-                  <td className="py-2">{s.storeName}</td>
+                  <td className="py-2">
+                    <Link
+                      href={`/admin/orders?corp=${encodeURIComponent(s.corporationName)}&store=${encodeURIComponent(s.storeName)}&from=${thisMonth.from}&to=${thisMonth.to}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {s.storeName}
+                    </Link>
+                  </td>
                   <td className="py-2">{s.corporationName}</td>
                   <td className="py-2">{s.points.toLocaleString()} 点</td>
                   <td className="py-2">{s.orderCount.toLocaleString()} 件</td>
@@ -196,7 +204,7 @@ export default async function AdminDashboardPage({
           </tbody>
         </table>
         <p className="mt-2 text-xs text-neutral-500">
-          報酬単価・行の色分けはこの店舗単独の月間合計点数に基づく参考値です(300円=白 / 450円=薄い黄色 / 600円=薄いピンク)。実際の支払い額は法人配下の店舗合計点数で算出したものが正式な金額です(上の法人別実績、および月次明細)。
+          報酬単価・行の色分けはこの店舗単独の月間合計点数に基づく参考値です(300円=白 / 450円=薄い黄色 / 600円=薄いピンク)。実際の支払い額は法人配下の店舗合計点数で算出したものが正式な金額です(上の法人別実績、および月次明細)。店舗をクリックすると、当月の注文一覧が表示されます。
         </p>
       </div>
     </div>

@@ -22,18 +22,33 @@ const styles = StyleSheet.create({
  * 非対象: 登録番号は表示せず、消費税額の内訳を「参考」扱いの注記のみとする
  * (仕入税額控除の可否は弊社側の税務判断による旨を明記)。
  */
+const BANK_ACCOUNT_TYPE_LABEL: Record<string, string> = {
+  ordinary: "普通",
+  checking: "当座",
+};
+
+export interface BankAccountInfo {
+  bankName: string | null;
+  bankBranchName: string | null;
+  bankAccountType: "ordinary" | "checking" | null;
+  bankAccountNumber: string | null;
+  bankAccountHolder: string | null;
+}
+
 export function StatementDocument({
   statement,
   corporationName,
   corporationAddress,
   invoiceRegistered,
   invoiceRegistrationNumber,
+  bankAccount,
 }: {
   statement: CorporationStatement;
   corporationName: string;
   corporationAddress: string | null;
   invoiceRegistered: boolean;
   invoiceRegistrationNumber: string | null;
+  bankAccount: BankAccountInfo | null;
 }) {
   const taxExcluded = statement.finalAmount;
   const tax = Math.floor(taxExcluded * 0.1);
@@ -113,12 +128,27 @@ export function StatementDocument({
           </View>
         </View>
 
+        {bankAccount?.bankName && (
+          <View style={{ marginTop: 16 }}>
+            <Text style={{ fontSize: 10, marginBottom: 4, fontWeight: 700 }}>お振込先</Text>
+            <Text style={styles.subtitle}>
+              {bankAccount.bankName} {bankAccount.bankBranchName}
+              {bankAccount.bankAccountType && ` ${BANK_ACCOUNT_TYPE_LABEL[bankAccount.bankAccountType]}`}
+              {bankAccount.bankAccountNumber && ` ${bankAccount.bankAccountNumber}`}
+            </Text>
+            {bankAccount.bankAccountHolder && (
+              <Text style={styles.subtitle}>口座名義: {bankAccount.bankAccountHolder}</Text>
+            )}
+          </View>
+        )}
+
         <Text style={styles.note}>
           {invoiceRegistered
             ? "本書は適格請求書等保存方式(インボイス制度)に基づく記載事項を含みます。"
             : "貴社はインボイス発行事業者として登録されていないため、本書は適格請求書に該当しません。仕入税額控除の取り扱いは弊社の税務処理に依ります。"}
         </Text>
         <Text style={styles.note}>振込予定日は対象月の翌月末日(土日祝日の場合は直前の平日)です。</Text>
+        <Text style={styles.note}>※振込手数料は、パートナー加盟店負担となります。</Text>
       </Page>
     </Document>
   );

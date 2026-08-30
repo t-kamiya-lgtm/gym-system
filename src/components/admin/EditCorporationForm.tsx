@@ -15,6 +15,11 @@ interface Props {
     contactName: string | null;
     contactTel: string | null;
     contactEmail: string | null;
+    bankName: string | null;
+    bankBranchName: string | null;
+    bankAccountType: "ordinary" | "checking" | null;
+    bankAccountNumber: string | null;
+    bankAccountHolder: string | null;
   };
 }
 
@@ -31,6 +36,11 @@ export function EditCorporationForm({ corporationId, initial }: Props) {
   const [contactName, setContactName] = useState(initial.contactName ?? "");
   const [contactTel, setContactTel] = useState(initial.contactTel ?? "");
   const [contactEmail, setContactEmail] = useState(initial.contactEmail ?? "");
+  const [bankName, setBankName] = useState(initial.bankName ?? "");
+  const [bankBranchName, setBankBranchName] = useState(initial.bankBranchName ?? "");
+  const [bankAccountType, setBankAccountType] = useState(initial.bankAccountType ?? "ordinary");
+  const [bankAccountNumber, setBankAccountNumber] = useState(initial.bankAccountNumber ?? "");
+  const [bankAccountHolder, setBankAccountHolder] = useState(initial.bankAccountHolder ?? "");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -53,6 +63,11 @@ export function EditCorporationForm({ corporationId, initial }: Props) {
         contactName: contactName || null,
         contactTel: contactTel || null,
         contactEmail: contactEmail || null,
+        bankName: bankName || null,
+        bankBranchName: bankBranchName || null,
+        bankAccountType: bankName ? bankAccountType : null,
+        bankAccountNumber: bankAccountNumber || null,
+        bankAccountHolder: bankAccountHolder || null,
       }),
     });
     setSubmitting(false);
@@ -121,6 +136,48 @@ export function EditCorporationForm({ corporationId, initial }: Props) {
           />
         </div>
       )}
+
+      <div className="space-y-3 border-t border-neutral-100 pt-3">
+        <h3 className="text-sm font-medium">振込先銀行口座(支払い明細書に記載)</h3>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-sm text-neutral-600">銀行名</label>
+            <input className="input" value={bankName} onChange={(e) => setBankName(e.target.value)} />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-neutral-600">支店名</label>
+            <input className="input" value={bankBranchName} onChange={(e) => setBankBranchName(e.target.value)} />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-neutral-600">口座種別</label>
+            <select
+              className="input"
+              value={bankAccountType}
+              onChange={(e) => setBankAccountType(e.target.value as "ordinary" | "checking")}
+            >
+              <option value="ordinary">普通</option>
+              <option value="checking">当座</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-neutral-600">口座番号</label>
+            <input
+              className="input"
+              value={bankAccountNumber}
+              onChange={(e) => setBankAccountNumber(e.target.value)}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-sm text-neutral-600">口座名義(カナ)</label>
+            <input
+              className="input"
+              value={bankAccountHolder}
+              onChange={(e) => setBankAccountHolder(e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
       {error && <p className="text-sm text-red-600">{error}</p>}
       {success && <p className="text-sm text-green-700">更新しました。</p>}
       <button type="submit" disabled={submitting} className="btn-primary text-sm">

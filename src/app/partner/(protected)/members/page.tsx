@@ -13,7 +13,7 @@ export default async function PartnerMembersPage({
   const partner = await getCurrentPartner();
   if (!partner) return null;
   const { from: fromParam, to: toParam } = await searchParams;
-  const def = rangeForShortcut("thisYear");
+  const def = rangeForShortcut("thisMonth");
   const from = fromParam ?? def.from;
   const to = toParam ?? def.to;
 

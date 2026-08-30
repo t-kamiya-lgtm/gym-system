@@ -6,6 +6,7 @@ import { currentYearMonthJst } from "@/lib/rewards";
 import { managementCode } from "@/lib/types";
 import { CreateStoreForm } from "@/components/admin/CreateStoreForm";
 import { CreatePartnerUserForm } from "@/components/admin/CreatePartnerUserForm";
+import { PartnerUserRow } from "@/components/admin/PartnerUserRow";
 import { EditCorporationForm } from "@/components/admin/EditCorporationForm";
 
 export default async function CorporationDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -142,14 +143,9 @@ export default async function CorporationDetailPage({ params }: { params: Promis
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="card">
           <h2 className="mb-3 font-medium">法人側ログインアカウント</h2>
-          <ul className="space-y-1 text-sm">
+          <ul className="space-y-2 text-sm">
             {(partnerUsers ?? []).map((u) => (
-              <li key={u.id} className="flex items-center justify-between">
-                <span>{u.email}</span>
-                <span className={u.is_active ? "text-green-700" : "text-neutral-400"}>
-                  {u.is_active ? "有効" : "無効"}
-                </span>
-              </li>
+              <PartnerUserRow key={u.id} partnerUserId={u.id} email={u.email} isActive={u.is_active} />
             ))}
             {(partnerUsers ?? []).length === 0 && <li className="text-neutral-400">未発行</li>}
           </ul>

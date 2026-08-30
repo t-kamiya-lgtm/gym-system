@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getShippedPointsByStoreForMonth } from "@/lib/order-lines";
+import { getShippedPointsByStoreForMonth, getUnshippedCountByCorp } from "@/lib/order-lines";
 import { unitPriceForPoints, monthDateRangeJst } from "@/lib/rewards";
 import { sendStatementClosedNotification } from "@/lib/email";
 import type { RewardTier } from "@/lib/types";
@@ -276,6 +276,7 @@ export interface StatementMenuRow {
   corporationId: string;
   corporationName: string;
   orderCount: number;
+  unshippedCount: number;
   unitPrice: number;
   finalAmount: number;
   status: "not_closed" | "closed" | "agreed";
@@ -283,12 +284,13 @@ export interface StatementMenuRow {
 
 /** 支払い明細メニュー画面用。対象月の全法人の状況を一覧で返す。 */
 export async function getStatementMenuRows(admin: SupabaseClient, yearMonth: string): Promise<StatementMenuRow[]> {
-  const [{ data: corporations }, { data: statementRows }] = await Promise.all([
+  const [{ data: corporations }, { data: statementRows }, unshippedCountByCorp] = await Promise.all([
     admin.from("gym_corporations").select("id, name").order("name"),
     admin
       .from("gym_monthly_statements")
       .select("corporation_id, status, unit_price, final_amount")
       .eq("year_month", `${yearMonth}-01`),
+    getUnshippedCountByCorp(admin, yearMonth),
   ]);
   const statementByCorp = new Map((statementRows ?? []).map((s) => [s.corporation_id, s]));
 
@@ -310,6 +312,7 @@ export async function getStatementMenuRows(admin: SupabaseClient, yearMonth: str
       corporationId: c.id,
       corporationName: c.name,
       orderCount: countByCorp.get(c.id) ?? 0,
+      unshippedCount: unshippedCountByCorp.get(c.id) ?? 0,
       unitPrice: s?.unit_price ?? 0,
       finalAmount: s?.final_amount ?? 0,
       status: (s?.status as "closed" | "agreed" | undefined) ?? "not_closed",

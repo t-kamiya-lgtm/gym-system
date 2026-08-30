@@ -132,7 +132,7 @@ export async function createOrderLineFromOrder(
 export async function syncOrderLineShipped(admin: SupabaseClient, orderId: string, storeId: string): Promise<void> {
   const { data: line } = await admin
     .from("gym_order_lines")
-    .select("id, locked")
+    .select("id, locked, flag_overridden_by_operator")
     .eq("source_order_id", orderId)
     .maybeSingle();
 
@@ -145,6 +145,10 @@ export async function syncOrderLineShipped(admin: SupabaseClient, orderId: strin
     if (error) console.error("[order-lines] syncOrderLineShipped (create) failed", { orderId, storeId, error });
     return;
   }
+
+  // 運営側が手動でフラグを変更済みの行は、チャットシステム側の後追いの状態変化で
+  // 上書きしない(運営側の判断を優先する)。
+  if (line.flag_overridden_by_operator) return;
 
   const { error } = await admin.from("gym_order_lines").update({ shipment_flag: "shipped" }).eq("id", line.id);
   if (error) console.error("[order-lines] syncOrderLineShipped failed", { orderId, storeId, error });
@@ -160,7 +164,7 @@ export async function syncOrderLineShipped(admin: SupabaseClient, orderId: strin
 export async function syncOrderLineCanceled(admin: SupabaseClient, orderId: string, storeId: string): Promise<void> {
   const { data: line } = await admin
     .from("gym_order_lines")
-    .select("id, corporation_id, store_id, order_number, customer_name, product_name, quantity, locked")
+    .select("id, corporation_id, store_id, order_number, customer_name, product_name, quantity, locked, flag_overridden_by_operator")
     .eq("source_order_id", orderId)
     .maybeSingle();
 
@@ -173,6 +177,9 @@ export async function syncOrderLineCanceled(admin: SupabaseClient, orderId: stri
     if (error) console.error("[order-lines] syncOrderLineCanceled (create) failed", { orderId, storeId, error });
     return;
   }
+
+  // 運営側が手動でフラグを変更済みの行は、チャットシステム側の後追いの状態変化で上書きしない。
+  if (line.flag_overridden_by_operator) return;
 
   if (!line.locked) {
     const { error } = await admin.from("gym_order_lines").update({ shipment_flag: "canceled" }).eq("id", line.id);
@@ -248,6 +255,28 @@ export async function getShippedPointsByStoreForMonth(
     pointsByStore.set(l.store_id, (pointsByStore.get(l.store_id) ?? 0) + l.quantity);
   }
   return storeList.map((s) => ({ storeId: s.id, storeName: s.name, points: pointsByStore.get(s.id) ?? 0 }));
+}
+
+/**
+ * 前月以前の受注で、まだ出荷フラグが「未出荷」のまま残っている件数を法人別に集計する
+ * (支払い明細メニューの「未出荷件数」列用)。beforeYearMonth自身は含まない。
+ */
+export async function getUnshippedCountByCorp(
+  admin: SupabaseClient,
+  beforeYearMonth: string,
+): Promise<Map<string, number>> {
+  const { startDate } = monthDateRangeJst(beforeYearMonth);
+  const { data: lines } = await admin
+    .from("gym_order_lines")
+    .select("corporation_id")
+    .eq("shipment_flag", "not_shipped")
+    .lt("order_date", startDate);
+
+  const counts = new Map<string, number>();
+  for (const l of lines ?? []) {
+    counts.set(l.corporation_id, (counts.get(l.corporation_id) ?? 0) + 1);
+  }
+  return counts;
 }
 
 /**

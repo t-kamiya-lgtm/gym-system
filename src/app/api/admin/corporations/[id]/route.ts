@@ -13,6 +13,11 @@ const updateSchema = z.object({
   contactName: z.string().nullable().optional(),
   contactTel: z.string().nullable().optional(),
   contactEmail: z.string().nullable().optional(),
+  bankName: z.string().nullable().optional(),
+  bankBranchName: z.string().nullable().optional(),
+  bankAccountType: z.enum(["ordinary", "checking"]).nullable().optional(),
+  bankAccountNumber: z.string().nullable().optional(),
+  bankAccountHolder: z.string().nullable().optional(),
 });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -37,6 +42,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (body.data.contactName !== undefined) patch.contact_name = body.data.contactName;
   if (body.data.contactTel !== undefined) patch.contact_tel = body.data.contactTel;
   if (body.data.contactEmail !== undefined) patch.contact_email = body.data.contactEmail;
+  if (body.data.bankName !== undefined) patch.bank_name = body.data.bankName;
+  if (body.data.bankBranchName !== undefined) patch.bank_branch_name = body.data.bankBranchName;
+  if (body.data.bankAccountType !== undefined) patch.bank_account_type = body.data.bankAccountType;
+  if (body.data.bankAccountNumber !== undefined) patch.bank_account_number = body.data.bankAccountNumber;
+  if (body.data.bankAccountHolder !== undefined) patch.bank_account_holder = body.data.bankAccountHolder;
 
   const admin = createSupabaseAdminClient();
   const { error } = await admin.from("gym_corporations").update(patch).eq("id", id);

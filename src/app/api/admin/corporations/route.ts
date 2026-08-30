@@ -13,6 +13,11 @@ const createSchema = z.object({
   contactName: z.string().nullable().optional(),
   contactTel: z.string().nullable().optional(),
   contactEmail: z.string().nullable().optional(),
+  bankName: z.string().nullable().optional(),
+  bankBranchName: z.string().nullable().optional(),
+  bankAccountType: z.enum(["ordinary", "checking"]).nullable().optional(),
+  bankAccountNumber: z.string().nullable().optional(),
+  bankAccountHolder: z.string().nullable().optional(),
 });
 
 export async function POST(request: Request) {
@@ -23,8 +28,22 @@ export async function POST(request: Request) {
   if (!body.success) {
     return NextResponse.json({ error: body.error.flatten() }, { status: 400 });
   }
-  const { name, invoiceRegistered, invoiceRegistrationNumber, address, tel, hpUrl, contactName, contactTel, contactEmail } =
-    body.data;
+  const {
+    name,
+    invoiceRegistered,
+    invoiceRegistrationNumber,
+    address,
+    tel,
+    hpUrl,
+    contactName,
+    contactTel,
+    contactEmail,
+    bankName,
+    bankBranchName,
+    bankAccountType,
+    bankAccountNumber,
+    bankAccountHolder,
+  } = body.data;
   if (invoiceRegistered && !invoiceRegistrationNumber) {
     return NextResponse.json({ error: "invoiceRegistrationNumber is required" }, { status: 400 });
   }
@@ -42,6 +61,11 @@ export async function POST(request: Request) {
       contact_name: contactName ?? null,
       contact_tel: contactTel ?? null,
       contact_email: contactEmail ?? null,
+      bank_name: bankName ?? null,
+      bank_branch_name: bankBranchName ?? null,
+      bank_account_type: bankAccountType ?? null,
+      bank_account_number: bankAccountNumber ?? null,
+      bank_account_holder: bankAccountHolder ?? null,
     })
     .select("id")
     .single();

@@ -16,7 +16,7 @@ export default async function CorporationDetailPage({ params }: { params: Promis
   const { data: corporation } = await admin
     .from("gym_corporations")
     .select(
-      "id, corp_no, name, invoice_registered, invoice_registration_number, address, tel, hp_url, contact_name, contact_tel, contact_email",
+      "id, corp_no, name, invoice_registered, invoice_registration_number, address, tel, hp_url, contact_name, contact_tel, contact_email, bank_name, bank_branch_name, bank_account_type, bank_account_number, bank_account_holder",
     )
     .eq("id", id)
     .maybeSingle();
@@ -92,6 +92,11 @@ export default async function CorporationDetailPage({ params }: { params: Promis
             contactName: corporation.contact_name,
             contactTel: corporation.contact_tel,
             contactEmail: corporation.contact_email,
+            bankName: corporation.bank_name,
+            bankBranchName: corporation.bank_branch_name,
+            bankAccountType: corporation.bank_account_type,
+            bankAccountNumber: corporation.bank_account_number,
+            bankAccountHolder: corporation.bank_account_holder,
           }}
         />
       </div>

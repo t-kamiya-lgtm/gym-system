@@ -101,7 +101,7 @@ export async function createOrderLineFromOrder(
       : Promise.resolve({ data: null as { interval: string } | null }),
   ]);
 
-  await admin
+  const { error } = await admin
     .from("gym_order_lines")
     .upsert(
       {
@@ -119,6 +119,10 @@ export async function createOrderLineFromOrder(
       },
       { onConflict: "source_order_id", ignoreDuplicates: true },
     );
+  if (error) {
+    console.error("[order-lines] createOrderLineFromOrder failed", { orderId, storeId, error });
+    throw new Error(`createOrderLineFromOrder failed: ${error.message}`);
+  }
 }
 
 /**
@@ -134,11 +138,16 @@ export async function syncOrderLineShipped(admin: SupabaseClient, orderId: strin
 
   if (!line) {
     await createOrderLineFromOrder(admin, orderId, storeId);
-    await admin.from("gym_order_lines").update({ shipment_flag: "shipped" }).eq("source_order_id", orderId);
+    const { error } = await admin
+      .from("gym_order_lines")
+      .update({ shipment_flag: "shipped" })
+      .eq("source_order_id", orderId);
+    if (error) console.error("[order-lines] syncOrderLineShipped (create) failed", { orderId, storeId, error });
     return;
   }
 
-  await admin.from("gym_order_lines").update({ shipment_flag: "shipped" }).eq("id", line.id);
+  const { error } = await admin.from("gym_order_lines").update({ shipment_flag: "shipped" }).eq("id", line.id);
+  if (error) console.error("[order-lines] syncOrderLineShipped failed", { orderId, storeId, error });
 }
 
 /**
@@ -157,16 +166,21 @@ export async function syncOrderLineCanceled(admin: SupabaseClient, orderId: stri
 
   if (!line) {
     await createOrderLineFromOrder(admin, orderId, storeId);
-    await admin.from("gym_order_lines").update({ shipment_flag: "canceled" }).eq("source_order_id", orderId);
+    const { error } = await admin
+      .from("gym_order_lines")
+      .update({ shipment_flag: "canceled" })
+      .eq("source_order_id", orderId);
+    if (error) console.error("[order-lines] syncOrderLineCanceled (create) failed", { orderId, storeId, error });
     return;
   }
 
   if (!line.locked) {
-    await admin.from("gym_order_lines").update({ shipment_flag: "canceled" }).eq("id", line.id);
+    const { error } = await admin.from("gym_order_lines").update({ shipment_flag: "canceled" }).eq("id", line.id);
+    if (error) console.error("[order-lines] syncOrderLineCanceled failed", { orderId, storeId, error });
     return;
   }
 
-  await admin.from("gym_order_lines").insert({
+  const { error } = await admin.from("gym_order_lines").insert({
     corporation_id: line.corporation_id,
     store_id: line.store_id,
     source_order_id: null,
@@ -179,6 +193,7 @@ export async function syncOrderLineCanceled(admin: SupabaseClient, orderId: stri
     is_reversal: true,
     reversal_of_line_id: line.id,
   });
+  if (error) console.error("[order-lines] syncOrderLineCanceled reversal insert failed", { orderId, storeId, error });
 }
 
 /**
@@ -289,4 +304,59 @@ export async function getLifetimeShippedQuantityByStore(admin: SupabaseClient): 
     totals.set(l.store_id, (totals.get(l.store_id) ?? 0) + l.quantity);
   }
   return totals;
+}
+
+/**
+ * 受注明細台帳(gym_order_lines)の再同期。gym_store_couponsに登録済みの店舗クーポンで
+ * 発生した注文のうち、まだgym_order_lines行が存在しないものを作成し、現在のimport_status
+ * (出荷済/キャンセル)を反映する。Webhook配信の一時的な失敗等で行が作られなかった場合の
+ * リカバリ用。既に行がある注文はスキップする(冪等)。
+ */
+export async function backfillOrderLines(admin: SupabaseClient): Promise<{ created: number; skipped: number }> {
+  const { data: storeCoupons } = await admin.from("gym_store_coupons").select("store_id, coupon_id");
+  const storeIdByCouponId = new Map((storeCoupons ?? []).map((sc) => [sc.coupon_id, sc.store_id]));
+  const couponIds = Array.from(storeIdByCouponId.keys());
+  if (couponIds.length === 0) return { created: 0, skipped: 0 };
+
+  const { data: orders } = await admin
+    .from("orders")
+    .select("id, coupon_id, import_status")
+    .in("coupon_id", couponIds);
+  if (!orders || orders.length === 0) return { created: 0, skipped: 0 };
+
+  const { data: existingLines } = await admin
+    .from("gym_order_lines")
+    .select("source_order_id")
+    .in(
+      "source_order_id",
+      orders.map((o) => o.id),
+    );
+  const existingOrderIds = new Set((existingLines ?? []).map((l) => l.source_order_id));
+
+  let created = 0;
+  let skipped = 0;
+  for (const order of orders) {
+    if (existingOrderIds.has(order.id)) {
+      skipped += 1;
+      continue;
+    }
+    const storeId = storeIdByCouponId.get(order.coupon_id as string);
+    if (!storeId) {
+      skipped += 1;
+      continue;
+    }
+    try {
+      await createOrderLineFromOrder(admin, order.id, storeId);
+      if (order.import_status === "shipped") {
+        await admin.from("gym_order_lines").update({ shipment_flag: "shipped" }).eq("source_order_id", order.id);
+      } else if (order.import_status === "canceled") {
+        await admin.from("gym_order_lines").update({ shipment_flag: "canceled" }).eq("source_order_id", order.id);
+      }
+      created += 1;
+    } catch (err) {
+      console.error("[order-lines] backfillOrderLines failed for order", order.id, err);
+      skipped += 1;
+    }
+  }
+  return { created, skipped };
 }

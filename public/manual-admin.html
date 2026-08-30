@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>運営側管理画面 操作マニュアル</title>
+<style>
+  :root {
+    --bg: #fff7ed;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --ink: #171717;
+    --muted: #6b7280;
+    --accent: #9a3412;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.7;
+  }
+  header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border);
+    padding: 20px 16px;
+    text-align: center;
+  }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 1.3rem;
+  }
+  header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .wrap {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 24px 16px 80px;
+  }
+  nav.toc {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+  }
+  nav.toc h2 {
+    font-size: 0.95rem;
+    margin: 0 0 10px;
+    color: var(--muted);
+  }
+  nav.toc ol {
+    margin: 0;
+    padding-left: 20px;
+  }
+  nav.toc a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  nav.toc a:hover { text-decoration: underline; }
+  section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    scroll-margin-top: 16px;
+  }
+  section h2 {
+    font-size: 1.1rem;
+    margin: 0 0 12px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--bg);
+  }
+  section h3 {
+    font-size: 0.98rem;
+    margin: 18px 0 8px;
+  }
+  section p, section li {
+    font-size: 0.92rem;
+  }
+  .note {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin: 10px 0;
+  }
+  .warn {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    margin: 10px 0;
+  }
+  code {
+    background: #f3f4f6;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.85em;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    margin: 10px 0;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f9fafb; }
+  .marker-white { background: #ffffff; }
+  .marker-pink { background: #fdf2f8; }
+  .marker-green { background: #f0fdf4; }
+  ol.steps { padding-left: 22px; }
+  ol.steps li { margin-bottom: 10px; }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    padding: 20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>プロテインモンスター オフィシャルパートナー<br>運営側管理画面 操作マニュアル</h1>
+  <p>本マニュアルは弊社(株式会社プライムダイレクト)の社内担当者(運営側)向けです。</p>
+</header>
+
+<div class="wrap">
+
+  <nav class="toc">
+    <h2>目次</h2>
+    <ol>
+      <li><a href="#intro">このマニュアルについて</a></li>
+      <li><a href="#glossary">用語・定義</a></li>
+      <li><a href="#roles">権限体系</a></li>
+      <li><a href="#accounts">ログイン・アカウント管理</a></li>
+      <li><a href="#dashboard">ダッシュボード</a></li>
+      <li><a href="#corporations">パートナー法人・店舗管理</a></li>
+      <li><a href="#orders">注文一覧</a></li>
+      <li><a href="#statements">支払い明細と月次締め業務フロー</a></li>
+      <li><a href="#settings">設定</a></li>
+      <li><a href="#faq">よくある質問</a></li>
+    </ol>
+  </nav>
+
+  <section id="intro">
+    <h2>1. このマニュアルについて</h2>
+    <p>運営側管理画面(<code>/admin</code>)の操作方法と、月次の支払い明細を確定させるまでの一連の業務フローをまとめたものです。パートナー法人・各店舗向けの操作方法は、別紙の「パートナー法人向け操作マニュアル」(<code>/manual.html</code>)を参照してください。新規パートナー法人へのご案内には、そちらをお渡しください。</p>
+  </section>
+
+  <section id="glossary">
+    <h2>2. 用語・定義</h2>
+    <table>
+      <thead><tr><th>用語</th><th>説明</th></tr></thead>
+      <tbody>
+        <tr><td>運営側</td><td>弊社(株式会社プライムダイレクト)の社内担当者。運営側管理画面(<code>/admin</code>)を利用する。</td></tr>
+        <tr><td>パートナー法人</td><td>アフィリエイトプログラムに参加する法人。パートナー側管理画面(<code>/partner</code>)を利用する。1つのログインで複数のパートナー法人を管理する場合もある。</td></tr>
+        <tr><td>各店舗</td><td>パートナー法人配下の店舗単位。クーポンコード1つと1対1で紐付き、実績集計の基本単位になる。</td></tr>
+        <tr><td>法人番号・店舗番号(法人店舗cd)</td><td>法人・店舗それぞれに振られる管理用の連番。「001-001」のように「法人番号-店舗番号」の形式で表示される。</td></tr>
+        <tr><td>クーポンコード</td><td>チャットシステム(pm-chat-bot)側で発行済みのクーポンコード。各店舗に1つ登録し、その店舗経由の注文を判定するキーとして使う。本システムから新規発行することはできない。</td></tr>
+        <tr><td>ポイント(点数)</td><td>注文の数量(quantity)。報酬計算の基礎単位。</td></tr>
+        <tr><td>報酬単価</td><td>パートナー法人配下の店舗合計ポイント数に応じて決まる単価。1〜9pt=300円、10〜99pt=450円、100pt以上=600円。</td></tr>
+        <tr><td>報酬額</td><td>ポイント数 × 報酬単価。</td></tr>
+        <tr><td>受注明細台帳</td><td>受注が発生した時点から出荷・キャンセルに至るまでの状態を記録する内部データ。注文一覧・支払い明細のもとになる。</td></tr>
+        <tr><td>出荷フラグ</td><td>各受注行の状態。「未出荷」「出荷済」「キャンセル」「その他報酬対象外」の4種類。報酬集計の対象になるのは「出荷済」の行のみ。</td></tr>
+        <tr><td>月末確定</td><td>運営側が対象月の受注明細を締めて、報酬額を確定する操作。確定するとパートナー側管理画面に明細が表示される。</td></tr>
+        <tr><td>同意</td><td>パートナー法人側が、確定済みの明細内容を確認し承認する操作。</td></tr>
+        <tr><td>フラグ解除</td><td>同意済みの明細を、運営側が再び「確定済み(未同意)」の状態に戻す操作。問い合わせ対応や内容修正の際に使う。</td></tr>
+        <tr><td>マイナス受注(返品行)</td><td>月末確定後にキャンセルが発生した場合に生成される、確定済みの数値はそのままに、点数がマイナスの受注行。現在オープン中の期間に追加され、次回以降の確定で相殺される。</td></tr>
+        <tr><td>インボイス登録番号</td><td>適格請求書発行事業者としての登録番号。パートナー法人のものは支払い明細書の宛名欄に、弊社のものは発行元情報に記載される。</td></tr>
+        <tr><td>振込予定日</td><td>対象月の翌月末日。土曜・日曜・祝日にあたる場合は、直前の平日になる。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="roles">
+    <h2>3. 権限体系</h2>
+    <h3>運営側</h3>
+    <p>Google Workspaceアカウント(自社ドメインのみ)でログインする。招待制で、事前に登録されたメールアドレスでのみログインできる。決済チャットボットシステム(pm-chat-bot)と共通のアカウント基盤を使うため、一方に招待すれば両システムで同じアカウントが使える。</p>
+    <table>
+      <thead><tr><th>権限</th><th>できること</th></tr></thead>
+      <tbody>
+        <tr><td>admin</td><td>すべての操作(パートナー法人ログインアカウントの発行、運営ユーザーの招待、月末確定、手動調整、フラグ解除など)</td></tr>
+        <tr><td>staff</td><td>閲覧、パートナー法人・店舗の登録程度。月末確定やアカウント発行などの重要な操作は不可</td></tr>
+      </tbody>
+    </table>
+    <h3>パートナー法人側</h3>
+    <p>メールアドレス+パスワードでログインする(運営側adminが発行)。1つのログインを複数のパートナー法人に紐付けることができ、その場合は画面右上のプルダウンで管理対象の法人を切り替える。</p>
+  </section>
+
+  <section id="accounts">
+    <h2>4. ログイン・アカウント管理</h2>
+    <h3>運営ユーザーの招待</h3>
+    <p>「設定」画面の「運営ユーザー」欄から、メールアドレスと権限(admin/staff)を指定して招待する(adminのみ操作可)。招待した時点ではまだログインできず、対象のGoogleアカウントで初回ログインした瞬間に有効になる。</p>
+    <h3>パートナー法人ログインアカウントの発行</h3>
+    <p>対象法人の詳細画面(「パートナー法人・店舗管理」→「法人管理」タブ→対象法人の「詳細・店舗管理」)から、メールアドレスと初期パスワードを指定して発行する。</p>
+    <p>入力したメールアドレスで既に別のパートナー法人のログインアカウントが存在する場合、新規アカウントは作らず、既存のログインにその法人を追加で紐付ける(1つのログインで複数法人を管理するケース)。</p>
+    <h3>ログインメールアドレスの変更</h3>
+    <div class="warn">運営側・パートナー法人側とも、管理画面上からメールアドレスを変更する機能は現時点ではありません。変更が必要な場合は、以下の手順でSupabase側を直接操作してください。</div>
+    <ol class="steps">
+      <li>Supabaseの「chat bot Project」の「Authentication」→「Users」から、対象ユーザーを検索し、メールアドレスを新しいものに書き換える。</li>
+      <li>パートナー法人アカウントの場合は、あわせて「Table Editor」の <code>gym_partner_users</code> テーブルで、該当行の <code>email</code> 列も同じ値に書き換える(画面表示用に保持しているため)。</li>
+      <li>運営ユーザーの場合は、同様に <code>users</code> テーブルの該当行の <code>email</code> 列を書き換える。</li>
+    </ol>
+    <p>操作に不安がある場合は、開発担当者に確認のうえ実施してください。</p>
+  </section>
+
+  <section id="dashboard">
+    <h2>5. ダッシュボード</h2>
+    <p>ログイン後、最初に表示される全体ダッシュボードです。指定した期間の法人数・合計点数・合計報酬額・合計売上と、パートナー法人別実績、店舗別実績を確認できます。</p>
+    <table>
+      <thead><tr><th>単価</th><th>行の色</th><th>点数の目安</th></tr></thead>
+      <tbody>
+        <tr><td>300円/点</td><td>白(無地)</td><td>1〜9点</td></tr>
+        <tr><td>450円/点</td><td style="background:#fefce8;">薄い黄色</td><td>10〜99点</td></tr>
+        <tr><td>600円/点</td><td style="background:#fdf2f8;">薄いピンク</td><td>100点以上</td></tr>
+      </tbody>
+    </table>
+    <div class="note">この一覧は選択期間のライブ集計(参考値)です。実際にお支払いする金額は、暦月(1日〜末日)単位で「支払い明細」画面にて別途確定します。</div>
+    <p>店舗別実績には、各店舗のクーポンコードが表示されます。店舗名をクリックすると、その店舗の当月の注文一覧に直接移動できます。</p>
+  </section>
+
+  <section id="corporations">
+    <h2>6. パートナー法人・店舗管理</h2>
+    <p>「パートナー法人・店舗管理」は「法人管理」「店舗・クーポン管理」の2タブに分かれています。</p>
+    <h3>法人管理タブ</h3>
+    <ul>
+      <li>パートナー法人の一覧・新規登録ができます。</li>
+      <li>「詳細・店舗管理」から法人ごとの詳細画面に入ると、以下が確認・編集できます。
+        <ul>
+          <li>法人マスタ: 法人名・住所・TEL・HP URL・担当者名/TEL/メールアドレス・インボイス登録有無/登録番号・振込先銀行口座(銀行名・支店名・口座種別・口座番号・口座名義)</li>
+          <li>店舗一覧・クーポンコードの登録(店舗の新規追加は運営側のみ)</li>
+          <li>パートナー法人ログインアカウントの発行</li>
+        </ul>
+      </li>
+    </ul>
+    <h3>店舗・クーポン管理タブ</h3>
+    <p>全店舗を横断して、法人店舗cd・法人名・店舗名・都道府県(プルダウンで編集可)・クーポンコード・累計販売数(全期間の出荷済ポイント合計)を一覧できます。</p>
+  </section>
+
+  <section id="orders">
+    <h2>7. 注文一覧</h2>
+    <p>期間・パートナー法人名・店舗名・注文番号で絞り込みながら、受注を新しい順に一覧できます。出荷済の注文に加えて、受注明細台帳に記録されている未出荷・キャンセル・その他報酬対象外の受注も、出荷フラグのバッジ付きで表示されます。</p>
+    <p>出荷済の行には、購入点数・税別金額・種別(単品/定期とその頻度)・性別・年齢が表示されます。出荷済以外の行はこれらの詳細が未確定のため「-」表示になります。</p>
+  </section>
+
+  <section id="statements">
+    <h2>8. 支払い明細と月次締め業務フロー</h2>
+    <p>月初に行う一連の締め作業の流れです。「支払い明細」メニュー(<code>/admin/statements</code>)を中心に操作します。</p>
+
+    <h3>ステップ1: 未出荷チェック(月初)</h3>
+    <p>「支払い明細」メニューを開くと、前月以前の受注で出荷フラグが「未出荷」のまま残っている件数がバナー表示されます。「確認する」から一覧画面(<code>/admin/statements/unshipped</code>)に移動し、受注日・注文番号・注文者名・パートナー法人名・店舗名・点数を確認します。</p>
+    <p>各行の出荷フラグをその場で「出荷済」「キャンセル」「その他報酬対象外」に変更できます。実際に出荷されたことが確認できたものは「出荷済」に、確認できないものは「未出荷」のまま残してかまいません(その月の報酬には含まれません)。</p>
+
+    <h3>ステップ2: 月末確定</h3>
+    <p>未出荷チェックが済んだら、「支払い明細」メニューの一覧に戻ります。対象年月はデフォルトで前月になっています。パートナー法人ごとに、件数・報酬単価・報酬金額と状況が表示されます。</p>
+    <table>
+      <thead><tr><th>行の色</th><th>状況</th></tr></thead>
+      <tbody>
+        <tr><td class="marker-white">白</td><td>未確定(月末確定処理待ち)</td></tr>
+        <tr><td class="marker-pink">薄いピンク</td><td>確定済み(パートナー法人の同意待ち)</td></tr>
+        <tr><td class="marker-green">薄い緑</td><td>同意済み</td></tr>
+      </tbody>
+    </table>
+    <p>画面上部の「一括月末確定」を押すと、まだ確定していない全法人をまとめて確定できます。個別に確定したい場合は、各行右端の「月末確定」ボタンを使います。確定すると、その法人の登録メールアドレス宛てに確定連絡メールが送信され、パートナー側管理画面に明細・PDF/CSVダウンロード・同意ボタンが表示されます。</p>
+
+    <h3>ステップ3: パートナー法人の確認・同意</h3>
+    <p>パートナー法人側で内容を確認し、問題がなければ「同意する」ボタンが押されます。確認したい点がある場合は、パートナー側の「確認事項を問い合わせる」フォームから問い合わせが届きます。問い合わせの内容は「支払い明細」メニュー上部の「明細への問い合わせ」から確認できます。</p>
+
+    <h3>ステップ4: 問い合わせ対応・フラグ解除</h3>
+    <p>問い合わせ内容を確認し、必要な調査・修正を行ったら、「対応済みにする(フラグ解除)」を押します。これにより、対象法人の同意状況が「確定済み(未同意)」に戻り、パートナー法人側が再度内容を確認できるようになります。</p>
+
+    <h3>ステップ5: 受注明細の修正</h3>
+    <p>「支払い明細」メニューの対象法人の行にある「注文明細」から、受注明細画面に入ります。「修正・編集」ボタンを押すと、表がExcelのような編集モードに切り替わり、行ごとに点数・出荷フラグをセル編集できます。報酬単価は法人全体の合計点数から自動計算される参考値のため、直接編集はできません。</p>
+    <p>画面下部の「受注行を追加する」から、システムに登録されていない受注を手動で追加できます。商品名・点数・出荷フラグは入力必須です。</p>
+    <p>編集内容は画面上部の合計点数・報酬単価・報酬合計金額にその場で反映されます。「保存」を押すと、修正前後の点数・単価・金額を示す確認ダイアログが表示されるので、内容を確認して更新してください。</p>
+    <div class="note">既に月末確定済みの月に対して保存すると、その場で数値が再集計され、同意状況は自動的に「確定済み(未同意)」に戻ります。まだ月末確定していない月への編集は、集計のみ保存され、パートナー法人への通知は送信されません。</div>
+
+    <h3>ステップ6: パートナー法人の再同意</h3>
+    <p>修正内容を確認したパートナー法人が、改めて「同意する」を押して完了です。</p>
+  </section>
+
+  <section id="settings">
+    <h2>9. 設定</h2>
+    <ul>
+      <li><strong>操作マニュアル</strong>: 本マニュアルおよびパートナー法人向けマニュアルへのリンクがあります。</li>
+      <li><strong>集計対象シナリオ</strong>: アフィリエイト集計の対象となるシナリオを1つ選択します。このシナリオ経由以外の注文は集計対象外です。</li>
+      <li><strong>運営ユーザー</strong>: 招待済み運営ユーザーの一覧・新規招待(adminのみ表示)。</li>
+    </ul>
+  </section>
+
+  <section id="faq">
+    <h2>10. よくある質問</h2>
+    <h3>Q. パートナー法人が同意した後に金額を直したい</h3>
+    <p>A. 対象法人の受注明細画面から点数・出荷フラグを修正して保存してください。自動的に「確定済み(未同意)」に戻り、パートナー法人側に再度同意していただく流れになります。</p>
+    <h3>Q. 一部の注文が受注一覧に出てこない</h3>
+    <p>A. まず「設定」の集計対象シナリオが正しく選択されているか確認してください。次に、対象店舗にクーポンコードが正しく登録されているか、「パートナー法人・店舗管理」の店舗・クーポン管理タブで確認してください。</p>
+    <h3>Q. 未出荷のまま残った注文はどうなるか</h3>
+    <p>A. 未出荷のままの受注はその月の報酬集計に含まれません。後日出荷が確認できた場合は、受注明細画面から出荷フラグを「出荷済」に変更し、対象月を再集計(月末確定)してください。</p>
+    <h3>Q. 支払い明細のPDFに振込先が表示されない</h3>
+    <p>A. 対象法人の法人マスタ(「パートナー法人・店舗管理」→対象法人の詳細画面)に振込先銀行口座が未登録の可能性があります。銀行名・支店名・口座種別・口座番号・口座名義を登録してください。</p>
+  </section>
+
+</div>
+
+<footer>プロテインモンスター オフィシャルパートナー管理画面(運営側)</footer>
+
+</body>
+</html>

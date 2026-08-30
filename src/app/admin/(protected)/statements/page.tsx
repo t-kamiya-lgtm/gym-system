@@ -90,6 +90,7 @@ export default async function AdminStatementsPage({
             <tr className="border-b border-neutral-200 text-left text-neutral-500">
               <th className="py-2">法人名</th>
               <th className="py-2 text-right">件数</th>
+              <th className="py-2 text-right">未出荷件数</th>
               <th className="py-2 text-right">報酬単価</th>
               <th className="py-2 text-right">報酬金額</th>
               <th className="py-2">状況</th>
@@ -101,6 +102,13 @@ export default async function AdminStatementsPage({
               <tr key={r.corporationId} className={`border-b border-neutral-100 ${STATUS_ROW_CLASS[r.status]}`}>
                 <td className="py-2 font-medium">{r.corporationName}</td>
                 <td className="py-2 text-right">{r.orderCount.toLocaleString()}件</td>
+                <td className="py-2 text-right">
+                  {r.unshippedCount > 0 ? (
+                    <span className="font-medium text-amber-700">{r.unshippedCount.toLocaleString()}件</span>
+                  ) : (
+                    "0件"
+                  )}
+                </td>
                 <td className="py-2 text-right">{r.unitPrice > 0 ? `¥${r.unitPrice.toLocaleString()}` : "-"}</td>
                 <td className="py-2 text-right font-medium">
                   {r.status === "not_closed" ? "-" : `¥${r.finalAmount.toLocaleString()}`}
@@ -128,7 +136,7 @@ export default async function AdminStatementsPage({
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-6 text-center text-neutral-400">
+                <td colSpan={7} className="py-6 text-center text-neutral-400">
                   登録された法人がありません
                 </td>
               </tr>

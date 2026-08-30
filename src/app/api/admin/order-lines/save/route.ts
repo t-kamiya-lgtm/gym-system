@@ -50,7 +50,7 @@ export async function POST(request: Request) {
   for (const u of updates) {
     const { error } = await admin
       .from("gym_order_lines")
-      .update({ quantity: u.quantity, shipment_flag: u.shipmentFlag })
+      .update({ quantity: u.quantity, shipment_flag: u.shipmentFlag, flag_overridden_by_operator: true })
       .eq("id", u.id)
       .eq("corporation_id", corporationId);
     if (error) {
@@ -70,6 +70,7 @@ export async function POST(request: Request) {
         quantity: line.quantity,
         shipment_flag: line.shipmentFlag,
         is_manual: true,
+        flag_overridden_by_operator: true,
         created_by: check.operator.email,
       })),
     );

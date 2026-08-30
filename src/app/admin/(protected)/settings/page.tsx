@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { getCurrentOperator } from "@/lib/auth-operator";
 import { TargetScenarioForm } from "@/components/admin/TargetScenarioForm";
 import { CreateOperatorUserForm } from "@/components/admin/CreateOperatorUserForm";
+import { BackfillOrderLinesButton } from "@/components/admin/BackfillOrderLinesButton";
 
 export default async function AdminSettingsPage() {
   const operator = await getCurrentOperator();
@@ -50,6 +51,16 @@ export default async function AdminSettingsPage() {
           </a>
         </div>
       </div>
+
+      {operator?.role === "admin" && (
+        <div className="card">
+          <h2 className="mb-1 font-medium">受注明細台帳の再同期</h2>
+          <p className="mb-3 text-xs text-neutral-500">
+            通知や集計に反映されない注文がある場合に使うリカバリ用の操作です。クーポン経由の注文のうち、まだ受注明細台帳(注文一覧・支払い明細のもとになるデータ)に取り込まれていないものをまとめて取り込みます。既に取り込み済みの注文はスキップされるため、何度実行しても問題ありません。
+          </p>
+          <BackfillOrderLinesButton />
+        </div>
+      )}
 
       <TargetScenarioForm
         scenarios={scenarios ?? []}

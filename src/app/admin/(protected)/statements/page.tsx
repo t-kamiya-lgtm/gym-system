@@ -91,7 +91,7 @@ export default async function AdminStatementsPage({
               <th className="py-2">法人名</th>
               <th className="py-2 text-right">件数</th>
               <th className="py-2 text-right">未出荷件数</th>
-              <th className="py-2 text-right">報酬単価</th>
+              <th className="py-2 text-right">平均単価</th>
               <th className="py-2 text-right">報酬金額</th>
               <th className="py-2">状況</th>
               <th className="py-2" />

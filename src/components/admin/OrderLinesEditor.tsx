@@ -21,6 +21,7 @@ const FLAG_BADGE_CLASS: Record<string, string> = {
 
 interface LineRow {
   id: string;
+  storeId: string;
   storeName: string;
   orderNumber: string | null;
   orderDate: string;
@@ -65,13 +66,45 @@ export function OrderLinesEditor({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 単価は店舗単位の月間合計点数に応じて店舗ごとに決まる(決定事項)。まず店舗ごとの出荷済み点数を集計する。
+  const storeUnitPriceById = useMemo(() => {
+    const quantityByStore = new Map<string, number>();
+    for (const r of rows) {
+      if (r.shipmentFlag !== "shipped") continue;
+      quantityByStore.set(r.storeId, (quantityByStore.get(r.storeId) ?? 0) + r.quantity);
+    }
+    for (const r of newRows) {
+      if (r.shipmentFlag !== "shipped") continue;
+      quantityByStore.set(r.storeId, (quantityByStore.get(r.storeId) ?? 0) + r.quantity);
+    }
+    const result = new Map<string, number>();
+    for (const [storeId, quantity] of quantityByStore) {
+      result.set(storeId, unitPriceForPoints(quantity, tiers));
+    }
+    return result;
+  }, [rows, newRows, tiers]);
+
+  function unitPriceForStore(storeId: string): number {
+    return storeUnitPriceById.get(storeId) ?? unitPriceForPoints(0, tiers);
+  }
+
   const shippedQuantity = useMemo(() => {
     const fromExisting = rows.filter((r) => r.shipmentFlag === "shipped").reduce((sum, r) => sum + r.quantity, 0);
     const fromNew = newRows.filter((r) => r.shipmentFlag === "shipped").reduce((sum, r) => sum + r.quantity, 0);
     return fromExisting + fromNew;
   }, [rows, newRows]);
-  const unitPrice = unitPriceForPoints(shippedQuantity, tiers);
-  const finalAmount = shippedQuantity * unitPrice;
+  const finalAmount = useMemo(() => {
+    const fromExisting = rows
+      .filter((r) => r.shipmentFlag === "shipped")
+      .reduce((sum, r) => sum + r.quantity * unitPriceForStore(r.storeId), 0);
+    const fromNew = newRows
+      .filter((r) => r.shipmentFlag === "shipped")
+      .reduce((sum, r) => sum + r.quantity * unitPriceForStore(r.storeId), 0);
+    return fromExisting + fromNew;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, newRows, storeUnitPriceById]);
+  // 表示用の参考値(店舗ごとの単価が異なる場合があるため、ポイント数による加重平均で1つの値にする)。
+  const averageUnitPrice = shippedQuantity > 0 ? Math.round(finalAmount / shippedQuantity) : 0;
 
   function updateRow(id: string, patch: Partial<LineRow>) {
     setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
@@ -112,13 +145,10 @@ export function OrderLinesEditor({
       "内容を更新しますか?",
       "",
       "【修正前】",
-      `${initialLines.filter((l) => l.shipmentFlag === "shipped").reduce((s, l) => s + l.quantity, 0)}点 × ¥${unitPriceForPoints(
-        initialLines.filter((l) => l.shipmentFlag === "shipped").reduce((s, l) => s + l.quantity, 0),
-        tiers,
-      ).toLocaleString()} = ¥${initialFinalAmount.toLocaleString()}`,
+      `${initialLines.filter((l) => l.shipmentFlag === "shipped").reduce((s, l) => s + l.quantity, 0)}点 = ¥${initialFinalAmount.toLocaleString()}`,
       "",
       "【修正後】",
-      `${shippedQuantity}点 × ¥${unitPrice.toLocaleString()} = ¥${finalAmount.toLocaleString()}`,
+      `${shippedQuantity}点 = ¥${finalAmount.toLocaleString()}(店舗ごとの単価で算出)`,
     ].join("\n");
     if (!confirm(message)) return;
 
@@ -161,8 +191,9 @@ export function OrderLinesEditor({
           <p className="text-xl font-bold">{shippedQuantity.toLocaleString()} pt</p>
         </div>
         <div className="border-t border-neutral-100 pt-3 sm:border-t-0 sm:border-l sm:pl-4 sm:pt-0">
-          <p className="text-xs text-neutral-500">報酬単価</p>
-          <p className="text-xl font-bold">¥{unitPrice.toLocaleString()}</p>
+          <p className="text-xs text-neutral-500">平均単価</p>
+          <p className="text-xl font-bold">¥{averageUnitPrice.toLocaleString()}</p>
+          <p className="text-[11px] text-neutral-400">単価は店舗ごとの月間合計点数に応じて店舗単位で決まります。これは加重平均の参考値です。</p>
         </div>
         <div className="border-t border-neutral-100 pt-3 sm:border-t-0 sm:border-l sm:pl-4 sm:pt-0">
           <p className="text-xs text-neutral-500">報酬合計金額</p>
@@ -208,6 +239,7 @@ export function OrderLinesEditor({
               <th className="py-2">店舗名</th>
               <th className="py-2">商品</th>
               <th className="py-2 text-right">点数</th>
+              <th className="py-2 text-right">単価</th>
               <th className="py-2 text-right">金額</th>
             </tr>
           </thead>
@@ -255,7 +287,10 @@ export function OrderLinesEditor({
                   )}
                 </td>
                 <td className="py-2 text-right">
-                  ¥{(r.shipmentFlag === "shipped" ? r.quantity * unitPrice : 0).toLocaleString()}
+                  {r.shipmentFlag === "shipped" ? `¥${unitPriceForStore(r.storeId).toLocaleString()}` : "-"}
+                </td>
+                <td className="py-2 text-right">
+                  ¥{(r.shipmentFlag === "shipped" ? r.quantity * unitPriceForStore(r.storeId) : 0).toLocaleString()}
                 </td>
               </tr>
             ))}
@@ -332,6 +367,9 @@ export function OrderLinesEditor({
                     />
                   </td>
                   <td className="py-2 text-right">
+                    {r.shipmentFlag === "shipped" ? `¥${unitPriceForStore(r.storeId).toLocaleString()}` : "-"}
+                  </td>
+                  <td className="py-2 text-right">
                     <button type="button" onClick={() => removeNewRow(r.tempId)} className="text-xs text-red-600 underline">
                       削除
                     </button>
@@ -340,7 +378,7 @@ export function OrderLinesEditor({
               ))}
             {editing && (
               <tr className="bg-neutral-50">
-                <td colSpan={8} className="border border-dashed border-neutral-300 p-0">
+                <td colSpan={9} className="border border-dashed border-neutral-300 p-0">
                   <button
                     type="button"
                     onClick={addBlankRow}
@@ -357,7 +395,7 @@ export function OrderLinesEditor({
             )}
             {rows.length === 0 && newRows.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-6 text-center text-neutral-400">
+                <td colSpan={9} className="py-6 text-center text-neutral-400">
                   対象月の受注データがありません
                 </td>
               </tr>

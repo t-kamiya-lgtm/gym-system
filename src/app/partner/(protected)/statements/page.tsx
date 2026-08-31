@@ -44,7 +44,7 @@ export default async function PartnerStatementsPage({
             <dd className="text-lg font-semibold">{statement.totalPoints.toLocaleString()} 点</dd>
           </div>
           <div>
-            <dt className="text-neutral-500">報酬単価</dt>
+            <dt className="text-neutral-500">平均単価</dt>
             <dd className="text-lg font-semibold">¥{statement.unitPrice.toLocaleString()}</dd>
           </div>
           <div>
@@ -93,11 +93,12 @@ export default async function PartnerStatementsPage({
 
       <div className="card overflow-x-auto">
         <h2 className="mb-3 font-medium">店舗別内訳</h2>
-        <table className="w-full min-w-[480px] text-sm">
+        <table className="w-full min-w-[560px] text-sm">
           <thead>
             <tr className="border-b border-neutral-200 text-left text-neutral-500">
               <th className="py-2">店舗名</th>
               <th className="py-2">点数</th>
+              <th className="py-2">単価</th>
               <th className="py-2">調整額</th>
               <th className="py-2">金額</th>
             </tr>
@@ -107,12 +108,16 @@ export default async function PartnerStatementsPage({
               <tr key={s.storeId} className="border-b border-neutral-100">
                 <td className="py-2">{s.storeName}</td>
                 <td className="py-2">{s.points.toLocaleString()} 点</td>
+                <td className="py-2">¥{s.unitPrice.toLocaleString()}</td>
                 <td className="py-2">¥{s.adjustmentTotal.toLocaleString()}</td>
                 <td className="py-2">¥{s.finalAmount.toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        <p className="mt-2 text-xs text-neutral-500">
+          単価は店舗ごとの月間合計点数に応じて店舗単位で決まります。上のサマリーの「平均単価」はポイント数による加重平均の参考値です。
+        </p>
       </div>
 
       <InquiryForm yearMonth={yearMonth} />

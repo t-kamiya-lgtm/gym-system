@@ -56,24 +56,35 @@ export default async function AdminDashboardPage({
     storeCount: number;
     points: number;
     revenue: number;
+    rewardAmount: number;
   }
   const byCorp = new Map<string, CorpAgg>();
   for (const s of stores) {
     let entry = byCorp.get(s.corporationId);
     if (!entry) {
-      entry = { corporationId: s.corporationId, corporationName: s.corporationName, storeCount: 0, points: 0, revenue: 0 };
+      entry = {
+        corporationId: s.corporationId,
+        corporationName: s.corporationName,
+        storeCount: 0,
+        points: 0,
+        revenue: 0,
+        rewardAmount: 0,
+      };
       byCorp.set(s.corporationId, entry);
     }
     entry.storeCount += 1;
     entry.points += s.points;
     entry.revenue += s.revenue;
+    // 単価は店舗単位の月間合計点数に応じて店舗ごとに決まる(法人合計点数ではない)。
+    entry.rewardAmount += s.points * unitPriceForPoints(s.points, tiers);
   }
 
   const corpRows = Array.from(byCorp.values())
-    .map((c) => {
-      const unitPrice = unitPriceForPoints(c.points, tiers);
-      return { ...c, unitPrice, rewardAmount: c.points * unitPrice };
-    })
+    .map((c) => ({
+      ...c,
+      // 表示用の参考値(店舗ごとの単価が異なる場合があるため、ポイント数による加重平均で1つの値にする)。
+      unitPrice: c.points > 0 ? Math.round(c.rewardAmount / c.points) : 0,
+    }))
     .sort((a, b) => b.rewardAmount - a.rewardAmount);
 
   const grandTotalPoints = corpRows.reduce((sum, c) => sum + c.points, 0);
@@ -118,7 +129,7 @@ export default async function AdminDashboardPage({
               <th className="py-2">法人名</th>
               <th className="py-2">店舗数</th>
               <th className="py-2">合計点数</th>
-              <th className="py-2">報酬単価</th>
+              <th className="py-2">平均単価</th>
               <th className="py-2">報酬額</th>
               <th className="py-2" />
             </tr>
@@ -149,7 +160,8 @@ export default async function AdminDashboardPage({
           </tbody>
         </table>
         <p className="mt-2 text-xs text-neutral-500">
-          報酬単価: 300円=白 / 450円=薄い黄色 / 600円=薄いピンク。この一覧は選択期間のライブ集計(参考値)で、実際の支払い明細は月次(カレンダー月)で別途確定します。
+          単価は店舗ごとの月間合計点数に応じて店舗単位で決まります。平均単価は法人配下の店舗の単価をポイント数で加重平均した参考値です(300円=白
+          / 450円=薄い黄色 / 600円=薄いピンクは平均単価による色分け)。この一覧は選択期間のライブ集計(参考値)で、実際の支払い明細は月次(カレンダー月)で別途確定します。
         </p>
       </div>
 
@@ -217,7 +229,7 @@ export default async function AdminDashboardPage({
           </tbody>
         </table>
         <p className="mt-2 text-xs text-neutral-500">
-          報酬単価・行の色分けはこの店舗単独の月間合計点数に基づく参考値です(300円=白 / 450円=薄い黄色 / 600円=薄いピンク)。実際の支払い額は法人配下の店舗合計点数で算出したものが正式な金額です(上の法人別実績、および月次明細)。店舗をクリックすると、当月の注文一覧が表示されます。
+          報酬単価はこの店舗単独の月間合計点数に応じて決まる正式な単価です(300円=白 / 450円=薄い黄色 / 600円=薄いピンク)。店舗をクリックすると、当月の注文一覧が表示されます。
         </p>
       </div>
     </div>

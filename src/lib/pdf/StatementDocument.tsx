@@ -22,8 +22,8 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 10, marginBottom: 16, color: "#555" },
   row: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#ddd", paddingVertical: 4 },
   headerRow: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#333", paddingVertical: 4, fontWeight: 700 },
-  cellName: { width: "40%" },
-  cellNum: { width: "20%", textAlign: "right" },
+  cellName: { width: "34%" },
+  cellNum: { width: "16.5%", textAlign: "right" },
   summary: { marginTop: 16, alignItems: "flex-end" },
   summaryRow: { flexDirection: "row", justifyContent: "space-between", width: 220, paddingVertical: 2 },
   note: { marginTop: 24, fontSize: 8, color: "#666" },
@@ -96,6 +96,7 @@ export function StatementDocument({
         <View style={styles.headerRow}>
           <Text style={styles.cellName}>店舗名</Text>
           <Text style={styles.cellNum}>点数</Text>
+          <Text style={styles.cellNum}>単価</Text>
           <Text style={styles.cellNum}>調整額</Text>
           <Text style={styles.cellNum}>金額</Text>
         </View>
@@ -103,10 +104,14 @@ export function StatementDocument({
           <View style={styles.row} key={s.storeId}>
             <Text style={styles.cellName}>{s.storeName}</Text>
             <Text style={styles.cellNum}>{s.points.toLocaleString()} 点</Text>
+            <Text style={styles.cellNum}>¥{s.unitPrice.toLocaleString()}</Text>
             <Text style={styles.cellNum}>¥{s.adjustmentTotal.toLocaleString()}</Text>
             <Text style={styles.cellNum}>¥{s.finalAmount.toLocaleString()}</Text>
           </View>
         ))}
+        <Text style={{ fontSize: 8, color: "#666", marginTop: 4 }}>
+          ※単価は店舗ごとの月間合計点数に応じて店舗単位で決まります。
+        </Text>
 
         <View style={styles.summary}>
           <View style={styles.summaryRow}>
@@ -114,7 +119,7 @@ export function StatementDocument({
             <Text>{statement.totalPoints.toLocaleString()} 点</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text>適用単価</Text>
+            <Text>平均単価</Text>
             <Text>¥{statement.unitPrice.toLocaleString()}</Text>
           </View>
           <View style={styles.summaryRow}>

@@ -54,7 +54,7 @@ export default async function CorporationStatementPage({
         <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
           <dt className="text-neutral-500">合計点数</dt>
           <dd>{statement.totalPoints.toLocaleString()} 点</dd>
-          <dt className="text-neutral-500">報酬単価</dt>
+          <dt className="text-neutral-500">平均単価</dt>
           <dd>¥{statement.unitPrice.toLocaleString()}</dd>
           <dt className="text-neutral-500">基本報酬額</dt>
           <dd>¥{statement.baseAmount.toLocaleString()}</dd>
@@ -152,7 +152,7 @@ export default async function CorporationStatementPage({
           </tbody>
           <tfoot>
             <tr className="border-t-2 border-neutral-300 font-medium">
-              <td className="py-2">合計(報酬単価 ¥{statement.unitPrice.toLocaleString()})</td>
+              <td className="py-2">合計(平均単価 ¥{statement.unitPrice.toLocaleString()})</td>
               <td className="py-2">
                 {dailyBreakdown.reduce((sum, d) => sum + d.points, 0).toLocaleString()} 点 / ¥
                 {statement.finalAmount.toLocaleString()}

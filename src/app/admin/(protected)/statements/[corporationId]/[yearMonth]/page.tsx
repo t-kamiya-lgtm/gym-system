@@ -62,6 +62,7 @@ export default async function OrderLinesPage({
         yearMonth={yearMonth}
         initialLines={lines.map((l) => ({
           id: l.id,
+          storeId: l.storeId,
           storeName: l.storeName,
           orderNumber: l.orderNumber,
           orderDate: l.orderDate,

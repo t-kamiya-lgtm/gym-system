@@ -17,6 +17,7 @@ export interface StoreStatementLine {
   storeId: string;
   storeName: string;
   points: number;
+  unitPrice: number;
   rewardAmount: number;
   adjustments: Adjustment[];
   adjustmentTotal: number;
@@ -27,6 +28,7 @@ export interface CorporationStatement {
   corporationId: string;
   yearMonth: string;
   totalPoints: number;
+  /** 店舗ごとの単価をポイント数で加重平均した参考値(店舗ごとの単価が異なる場合がある)。 */
   unitPrice: number;
   baseAmount: number;
   corpLevelAdjustments: Adjustment[];
@@ -64,10 +66,6 @@ async function buildStoreStatements(
     unitPrice: t.unit_price,
   }));
 
-  const totalPoints = storePoints.reduce((sum, s) => sum + s.points, 0);
-  const unitPrice = unitPriceForPoints(totalPoints, tiers);
-  const baseAmount = totalPoints * unitPrice;
-
   const adjustments: Adjustment[] = (adjustmentRows ?? []).map((a) => ({
     id: a.id,
     storeId: a.store_id,
@@ -79,20 +77,28 @@ async function buildStoreStatements(
   const corpLevelAdjustments = adjustments.filter((a) => a.storeId === null);
   const adjustmentTotal = adjustments.reduce((sum, a) => sum + a.amount, 0);
 
+  // 単価は店舗単位の月間合計点数に応じて店舗ごとに決まる(決定事項)。
   const stores: StoreStatementLine[] = storePoints.map((store) => {
+    const storeUnitPrice = unitPriceForPoints(store.points, tiers);
     const storeAdjustments = adjustments.filter((a) => a.storeId === store.storeId);
     const storeAdjustmentTotal = storeAdjustments.reduce((sum, a) => sum + a.amount, 0);
-    const rewardAmount = store.points * unitPrice;
+    const rewardAmount = store.points * storeUnitPrice;
     return {
       storeId: store.storeId,
       storeName: store.storeName,
       points: store.points,
+      unitPrice: storeUnitPrice,
       rewardAmount,
       adjustments: storeAdjustments,
       adjustmentTotal: storeAdjustmentTotal,
       finalAmount: rewardAmount + storeAdjustmentTotal,
     };
   });
+
+  const totalPoints = stores.reduce((sum, s) => sum + s.points, 0);
+  const baseAmount = stores.reduce((sum, s) => sum + s.rewardAmount, 0);
+  // 表示用の参考値(店舗ごとの単価が異なる場合があるため、ポイント数による加重平均で1つの値にする)。
+  const unitPrice = totalPoints > 0 ? Math.round(baseAmount / totalPoints) : 0;
 
   return {
     corporationId,
@@ -142,6 +148,7 @@ export async function getCorporationStatement(
         storeId: s.id,
         storeName: s.name,
         points: 0,
+        unitPrice: 0,
         rewardAmount: 0,
         adjustments: [],
         adjustmentTotal: 0,
@@ -153,7 +160,7 @@ export async function getCorporationStatement(
   const [{ data: storeRows }, { data: stores }] = await Promise.all([
     admin
       .from("gym_monthly_statement_stores")
-      .select("store_id, points, reward_amount, adjustment_total, final_amount")
+      .select("store_id, points, unit_price, reward_amount, adjustment_total, final_amount")
       .eq("statement_id", statementRow.id),
     admin.from("gym_stores").select("id, name").eq("corporation_id", corporationId),
   ]);
@@ -175,6 +182,7 @@ export async function getCorporationStatement(
       storeId: r.store_id,
       storeName: nameById.get(r.store_id) ?? "(削除済み店舗)",
       points: r.points,
+      unitPrice: r.unit_price ?? 0,
       rewardAmount: r.reward_amount,
       adjustments: [],
       adjustmentTotal: r.adjustment_total,
@@ -228,6 +236,7 @@ export async function closeMonthForCorporation(
         statement_id: statement.id,
         store_id: s.storeId,
         points: s.points,
+        unit_price: s.unitPrice,
         reward_amount: s.rewardAmount,
         adjustment_total: s.adjustmentTotal,
         final_amount: s.finalAmount,
@@ -237,13 +246,17 @@ export async function closeMonthForCorporation(
   }
 
   const { startDate, endDate } = monthDateRangeJst(yearMonth);
-  await admin
-    .from("gym_order_lines")
-    .update({ locked: true, statement_id: statement.id, unit_price_snapshot: computed.unitPrice })
-    .eq("corporation_id", corporationId)
-    .eq("shipment_flag", "shipped")
-    .gte("order_date", startDate)
-    .lt("order_date", endDate);
+  for (const store of computed.stores) {
+    const { error: lineUpdateError } = await admin
+      .from("gym_order_lines")
+      .update({ locked: true, statement_id: statement.id, unit_price_snapshot: store.unitPrice })
+      .eq("corporation_id", corporationId)
+      .eq("store_id", store.storeId)
+      .eq("shipment_flag", "shipped")
+      .gte("order_date", startDate)
+      .lt("order_date", endDate);
+    if (lineUpdateError) throw new Error(lineUpdateError.message);
+  }
 
   await sendStatementClosedNotification(admin, corporationId, yearMonth);
 

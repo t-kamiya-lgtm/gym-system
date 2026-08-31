@@ -26,8 +26,10 @@ export default async function PartnerDashboardPage({
   const to = toParam ?? def.to;
 
   const admin = createSupabaseAdminClient();
-  const [{ stores }, { data: tierRows }, { data: storeCoupons }] = await Promise.all([
+  const thisMonthRange = rangeForShortcut("thisMonth");
+  const [{ stores }, { stores: thisMonthStores }, { data: tierRows }, { data: storeCoupons }] = await Promise.all([
     getStorePointsForCorporationInRange(admin, partner.corporationId, from, to),
+    getStorePointsForCorporationInRange(admin, partner.corporationId, thisMonthRange.from, thisMonthRange.to),
     admin.from("gym_reward_tiers").select("min_points, max_points, unit_price").order("min_points"),
     admin.from("gym_store_coupons").select("store_id, coupon_id"),
   ]);
@@ -44,9 +46,14 @@ export default async function PartnerDashboardPage({
     : { data: [] as { id: string; code: string | null }[] };
   const codeByCouponId = new Map((couponRows ?? []).map((c) => [c.id, c.code]));
 
-  const totalPoints = stores.reduce((sum, s) => sum + s.points, 0);
-  const unitPrice = unitPriceForPoints(totalPoints, tiers);
-  const rewardAmount = totalPoints * unitPrice;
+  // 単価は店舗単位の月間合計点数に応じて店舗ごとに決まる。トップサマリーは常に「当月」時点のライブ集計(予定額)。
+  const thisMonthTotalPoints = thisMonthStores.reduce((sum, s) => sum + s.points, 0);
+  const thisMonthRewardAmount = thisMonthStores.reduce(
+    (sum, s) => sum + s.points * unitPriceForPoints(s.points, tiers),
+    0,
+  );
+  const thisMonthAverageUnitPrice =
+    thisMonthTotalPoints > 0 ? Math.round(thisMonthRewardAmount / thisMonthTotalPoints) : 0;
   const activeCounts = await getActiveSubscriberCountsByStore(admin, stores.map((s) => s.storeId));
 
   const storeRows = [...stores].sort((a, b) => b.points - a.points);
@@ -61,18 +68,21 @@ export default async function PartnerDashboardPage({
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <div className="rounded-lg border border-neutral-200 bg-white p-3">
-          <div className="text-xs text-neutral-500">合計点数</div>
-          <div className="text-lg font-semibold sm:text-xl">{totalPoints.toLocaleString()} 点</div>
+          <div className="text-xs text-neutral-500">当月の合計点数</div>
+          <div className="text-lg font-semibold sm:text-xl">{thisMonthTotalPoints.toLocaleString()} 点</div>
         </div>
         <div className="rounded-lg border border-neutral-200 bg-white p-3">
-          <div className="text-xs text-neutral-500">報酬単価</div>
-          <div className="text-lg font-semibold sm:text-xl">¥{unitPrice.toLocaleString()}</div>
+          <div className="text-xs text-neutral-500">当月の平均単価</div>
+          <div className="text-lg font-semibold sm:text-xl">¥{thisMonthAverageUnitPrice.toLocaleString()}</div>
         </div>
         <div className="rounded-lg border border-neutral-200 bg-white p-3">
-          <div className="text-xs text-neutral-500">報酬額</div>
-          <div className="text-lg font-semibold sm:text-xl">¥{rewardAmount.toLocaleString()}</div>
+          <div className="text-xs text-neutral-500">当月の報酬額</div>
+          <div className="text-lg font-semibold sm:text-xl">¥{thisMonthRewardAmount.toLocaleString()}</div>
         </div>
       </div>
+      <p className="text-xs text-neutral-500">
+        上記は当月時点のライブ集計(予定額)です。単価は店舗ごとの月間合計点数に応じて店舗単位で決まり、平均単価はそれをポイント数で加重平均した参考値です。キャンセルなどを加味した実績は、月末確定処理後、支払い明細書にてご確認ください。
+      </p>
 
       <div className="card overflow-x-auto">
         <h2 className="mb-3 font-medium">店舗別実績</h2>
@@ -135,7 +145,7 @@ export default async function PartnerDashboardPage({
           </tbody>
         </table>
         <p className="mt-2 text-xs text-neutral-500">
-          報酬単価・行の色分けはこの店舗単独の月間合計点数に基づく参考値です(300円=白 / 450円=薄い黄色 / 600円=薄いピンク)。実際の支払い額は法人配下の店舗合計点数で算出したものが正式な金額です(上のサマリー、および「支払い明細」メニューで月次に確定します)。店舗名をクリックすると、当月の注文一覧が表示されます。
+          報酬単価はこの店舗単独の月間合計点数に応じて決まります(300円=白 / 450円=薄い黄色 / 600円=薄いピンク)。この一覧は選択期間のライブ集計(予定額)で、実際の金額は「支払い明細」メニューで月次に確定します。店舗名をクリックすると、当月の注文一覧が表示されます。
         </p>
       </div>
     </div>

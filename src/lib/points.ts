@@ -90,19 +90,20 @@ async function computeStorePoints(
   startIso: string,
   endIso: string,
 ): Promise<{ targetScenarioId: string | null; stores: StorePoints[] }> {
-  const { data: settings } = await admin.from("gym_settings").select("target_scenario_id").single();
-  const targetScenarioId = settings?.target_scenario_id ?? null;
-
   const result = new Map<string, StorePoints>(
     storeRows.map((s) => [s.id, emptyStorePoints(s.id, s.name, s.corporation_id, s.corporationName)]),
   );
-  if (storeRows.length === 0) return { targetScenarioId, stores: [] };
+  if (storeRows.length === 0) {
+    const { data: settings } = await admin.from("gym_settings").select("target_scenario_id").single();
+    return { targetScenarioId: settings?.target_scenario_id ?? null, stores: [] };
+  }
 
   const storeIds = storeRows.map((s) => s.id);
-  const { data: storeCoupons } = await admin
-    .from("gym_store_coupons")
-    .select("store_id, coupon_id")
-    .in("store_id", storeIds);
+  const [{ data: settings }, { data: storeCoupons }] = await Promise.all([
+    admin.from("gym_settings").select("target_scenario_id").single(),
+    admin.from("gym_store_coupons").select("store_id, coupon_id").in("store_id", storeIds),
+  ]);
+  const targetScenarioId = settings?.target_scenario_id ?? null;
   const couponToStore = new Map((storeCoupons ?? []).map((sc) => [sc.coupon_id, sc.store_id]));
   const couponIds = Array.from(couponToStore.keys());
 

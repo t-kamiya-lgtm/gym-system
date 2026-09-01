@@ -3,6 +3,7 @@ import { getAllStorePointsInRange } from "@/lib/points";
 import { getOrderLinesInDateRange } from "@/lib/order-lines";
 import { defaultRange, dayRangeJstToDates } from "@/lib/date-range";
 import { DateRangePicker } from "@/components/admin/DateRangePicker";
+import { OrderFilterForm } from "@/components/admin/OrderFilterForm";
 
 const FLAG_LABELS: Record<string, string> = {
   shipped: "出荷済",
@@ -109,39 +110,7 @@ export default async function AdminOrdersPage({
         <DateRangePicker from={from} to={to} />
       </div>
 
-      <form className="card flex flex-wrap items-end gap-3 text-sm">
-        <input type="hidden" name="from" value={from} />
-        <input type="hidden" name="to" value={to} />
-        <div>
-          <label className="mb-1 block text-neutral-600">法人名</label>
-          <select name="corp" defaultValue={corp ?? ""} className="input w-auto">
-            <option value="">すべて</option>
-            {corpNames.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-neutral-600">店舗名</label>
-          <select name="store" defaultValue={store ?? ""} className="input w-auto">
-            <option value="">すべて</option>
-            {storeNames.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-neutral-600">注文番号検索</label>
-          <input type="text" name="q" defaultValue={q ?? ""} placeholder="注文番号" className="input w-auto" />
-        </div>
-        <button type="submit" className="btn-primary text-sm">
-          絞り込む
-        </button>
-      </form>
+      <OrderFilterForm corpNames={corpNames} storeNames={storeNames} corp={corp} store={store} q={q} />
 
       <div className="card overflow-x-auto">
         <table className="w-full min-w-[1160px] text-sm">

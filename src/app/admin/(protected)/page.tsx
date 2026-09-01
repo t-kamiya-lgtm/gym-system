@@ -43,12 +43,14 @@ export default async function AdminDashboardPage({
 
   const couponIdByStoreId = new Map((storeCoupons ?? []).map((sc) => [sc.store_id, sc.coupon_id]));
   const couponIds = Array.from(couponIdByStoreId.values());
-  const { data: couponRows } = couponIds.length
-    ? await admin.from("coupons").select("id, code").in("id", couponIds)
-    : { data: [] as { id: string; code: string | null }[] };
-  const codeByCouponId = new Map((couponRows ?? []).map((c) => [c.id, c.code]));
 
-  const activeCounts = await getActiveSubscriberCountsByStore(admin, stores.map((s) => s.storeId));
+  const [{ data: couponRows }, activeCounts] = await Promise.all([
+    couponIds.length
+      ? admin.from("coupons").select("id, code").in("id", couponIds)
+      : Promise.resolve({ data: [] as { id: string; code: string | null }[] }),
+    getActiveSubscriberCountsByStore(admin, stores.map((s) => s.storeId)),
+  ]);
+  const codeByCouponId = new Map((couponRows ?? []).map((c) => [c.id, c.code]));
 
   interface CorpAgg {
     corporationId: string;

@@ -27,9 +27,14 @@ export default async function PartnerDashboardPage({
 
   const admin = createSupabaseAdminClient();
   const thisMonthRange = rangeForShortcut("thisMonth");
-  const [{ stores }, { stores: thisMonthStores }, { data: tierRows }, { data: storeCoupons }] = await Promise.all([
+  // 選択期間がデフォルト(当月)と同じ場合は、同じ集計を二重に取得しない。
+  const rangeIsThisMonth = from === thisMonthRange.from && to === thisMonthRange.to;
+
+  const [{ stores }, thisMonthResult, { data: tierRows }, { data: storeCoupons }] = await Promise.all([
     getStorePointsForCorporationInRange(admin, partner.corporationId, from, to),
-    getStorePointsForCorporationInRange(admin, partner.corporationId, thisMonthRange.from, thisMonthRange.to),
+    rangeIsThisMonth
+      ? Promise.resolve(null)
+      : getStorePointsForCorporationInRange(admin, partner.corporationId, thisMonthRange.from, thisMonthRange.to),
     admin.from("gym_reward_tiers").select("min_points, max_points, unit_price").order("min_points"),
     admin.from("gym_store_coupons").select("store_id, coupon_id"),
   ]);
@@ -41,12 +46,17 @@ export default async function PartnerDashboardPage({
 
   const couponIdByStoreId = new Map((storeCoupons ?? []).map((sc) => [sc.store_id, sc.coupon_id]));
   const couponIds = Array.from(couponIdByStoreId.values());
-  const { data: couponRows } = couponIds.length
-    ? await admin.from("coupons").select("id, code").in("id", couponIds)
-    : { data: [] as { id: string; code: string | null }[] };
+
+  const [{ data: couponRows }, activeCounts] = await Promise.all([
+    couponIds.length
+      ? admin.from("coupons").select("id, code").in("id", couponIds)
+      : Promise.resolve({ data: [] as { id: string; code: string | null }[] }),
+    getActiveSubscriberCountsByStore(admin, stores.map((s) => s.storeId)),
+  ]);
   const codeByCouponId = new Map((couponRows ?? []).map((c) => [c.id, c.code]));
 
   // 単価は店舗単位の月間合計点数に応じて店舗ごとに決まる。トップサマリーは常に「当月」時点のライブ集計(予定額)。
+  const thisMonthStores = rangeIsThisMonth ? stores : thisMonthResult!.stores;
   const thisMonthTotalPoints = thisMonthStores.reduce((sum, s) => sum + s.points, 0);
   const thisMonthRewardAmount = thisMonthStores.reduce(
     (sum, s) => sum + s.points * unitPriceForPoints(s.points, tiers),
@@ -54,7 +64,6 @@ export default async function PartnerDashboardPage({
   );
   const thisMonthAverageUnitPrice =
     thisMonthTotalPoints > 0 ? Math.round(thisMonthRewardAmount / thisMonthTotalPoints) : 0;
-  const activeCounts = await getActiveSubscriberCountsByStore(admin, stores.map((s) => s.storeId));
 
   const storeRows = [...stores].sort((a, b) => b.points - a.points);
   const thisMonth = rangeForShortcut("thisMonth");
